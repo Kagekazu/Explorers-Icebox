@@ -3,9 +3,6 @@ namespace ExplorersIcebox.Ui;
 
 internal class DebugWindow : Window
 {
-    // variables that hold the "ref"s for ImGui
-    private string addonName = "default";
-
     private string[] debugTypes =
     [
         "Player Info", "Navmesh Debug", "Misc Info",
@@ -13,7 +10,6 @@ internal class DebugWindow : Window
         "Island Node Finder", "Island Item Info", "Route Editor V4",
         "Simple Route Creator", "Picto Testing", "Shop Export"
     ];
-    private string inputValue = "0"; // The uint value to be edited
     private int selectedDebugIndex; // This should be stored somewhere persistent
     public DebugWindow() : base("Explorer's IceBox Debug ###Explorer's Icebox Debug")
     {

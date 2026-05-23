@@ -9,7 +9,6 @@ namespace ExplorersIcebox.Ui.DebugWindowTabs;
 internal class BaseRouteEditor
 {
     private static string NewRouteName = "";
-    private static bool RouteWP = false;
     private static bool PathWP;
     private static bool ShowTargets;
     private static bool ShowTargetsName;

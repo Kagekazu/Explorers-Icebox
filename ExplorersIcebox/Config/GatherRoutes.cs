@@ -5,8 +5,6 @@ namespace ExplorersIcebox.Config;
 
 public class GatherRoutes : IYamlConfig
 {
-    private int Version = 3;
-
     public Dictionary<string, RouteClass.RouteUtil> Routes { get; set; } = new();
 
     public Dictionary<string, RouteClass.InteractionUtil> BaseRoutes { get; set; } = new();
