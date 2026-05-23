@@ -3,11 +3,11 @@ using ECommons.GameHelpers;
 using ECommons.SplatoonAPI;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using System.Collections.Generic;
-
 namespace ExplorersIcebox.IPC;
+
 public class SplatoonManager
 {
-    private static ulong Frame = 0;
+    private static ulong Frame;
     private static SplatoonCache Cache = new();
 
     public SplatoonManager()
@@ -23,7 +23,7 @@ public class SplatoonManager
 
     private static unsafe void ResetOnFrameChange()
     {
-        var frame = Framework.Instance()->FrameCounter;
+        uint frame = Framework.Instance()->FrameCounter;
         if (frame != Frame)
         {
             Frame = frame;
@@ -37,11 +37,11 @@ public class SplatoonManager
         Vector3? prev = null;
         if (path != null && path.Count > 0)
         {
-            for (var i = 0; i < path.Count; i++)
+            for(int i = 0; i < path.Count; i++)
             {
-                var point = GetNextPoint(addNumbers ? (i + 1).ToString() : "");
+                Element point = GetNextPoint(addNumbers ? (i + 1).ToString() : "");
                 point.SetRefCoord(path[i]);
-                var line = GetNextLine();
+                Element line = GetNextLine();
                 line.SetRefCoord(path[i]);
                 if (Player.Object != null)
                     line.SetOffCoord(prev ?? Player.Object.Position);
@@ -66,10 +66,10 @@ public class SplatoonManager
         }
         else
         {
-            ret = new Element(ElementType.LineBetweenTwoFixedCoordinates)
+            ret = new(ElementType.LineBetweenTwoFixedCoordinates)
             {
                 radius = 0f,
-                thicc = 1f,
+                thicc = 1f
             };
             Cache.WaymarkLineCache.Add(ret);
         }
@@ -87,13 +87,13 @@ public class SplatoonManager
         }
         else
         {
-            ret = new Element(ElementType.CircleAtFixedCoordinates)
+            ret = new(ElementType.CircleAtFixedCoordinates)
             {
                 radius = 0f,
                 thicc = 3f,
                 color = ImGuiColors.DalamudRed.ToUint(),
                 overlayVOffset = 1f,
-                overlayText = overlay,
+                overlayText = overlay
             };
             Cache.WaymarkPointCache.Add(ret);
         }

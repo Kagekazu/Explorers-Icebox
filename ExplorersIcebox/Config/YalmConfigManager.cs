@@ -19,35 +19,35 @@ public static class YamlConfig
     {
         if (!File.Exists(path))
         {
-            var defaultConfig = new T();
+            T? defaultConfig = new();
             Save(defaultConfig, path);
             return defaultConfig;
         }
 
-        var yaml = File.ReadAllText(path);
+        string yaml = File.ReadAllText(path);
         return Deserializer.Deserialize<T>(yaml) ?? new T();
     }
 
     public static void Save<T>(T config, string path)
     {
-        var yaml = Serializer.Serialize(config);
+        string yaml = Serializer.Serialize(config);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, yaml);
     }
 
     public static T LoadFromResource<T>(string resourceName) where T : new()
     {
-        var assembly = Assembly.GetExecutingAssembly();
+        Assembly assembly = Assembly.GetExecutingAssembly();
 
         using Stream? stream = assembly.GetManifestResourceStream(resourceName);
         if (stream == null)
         {
             PluginLog.Warning($"Could not find embedded resource: {resourceName}");
-            return new T();
+            return new();
         }
 
-        using var reader = new StreamReader(stream);
-        var yaml = reader.ReadToEnd();
+        using StreamReader reader = new(stream);
+        string yaml = reader.ReadToEnd();
 
         return Deserializer.Deserialize<T>(yaml) ?? new T();
     }

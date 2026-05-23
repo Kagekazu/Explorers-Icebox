@@ -1,24 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ExplorersIcebox.IPC;
+namespace ExplorersIcebox.Ui.DebugWindowTabs;
 
-namespace ExplorersIcebox.Ui.DebugWindowTabs
+internal class RouteSellDebug
 {
-    internal class RouteSellDebug
+    public static void Draw()
     {
-        public static void Draw()
+        ImGui.Text("This is where the route sell debug would be... IF I HAD ONE");
+        if (NavmeshIPC.Installed)
         {
-            ImGui.Text("This is where the route sell debug would be... IF I HAD ONE");
-            if (IPC.NavmeshIPC.Installed)
-            {
-                ImGui.Text("Navmesh is installed. Woohoo!");
-            }
-            else
-            {
-                ImGui.Text("Navmesh is not installed. BOOOOO");
-            }
+            ImGui.Text("Navmesh is installed. Woohoo!");
+        }
+        else
+        {
+            ImGui.Text("Navmesh is not installed. BOOOOO");
         }
     }
 }

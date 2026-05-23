@@ -1,39 +1,26 @@
 using ECommons.Logging;
 using ExplorersIcebox.Util.PathCreation;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.Marshalling;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ExplorersIcebox.Util;
 
 public static class IslandHelper
 {
-    public static int GoalLoopAmount = 0;
+    public static int GoalLoopAmount;
     public static int MaxRouteLoops = 999;
     public static int LoopCounter = 0;
     public static KeyValuePair<string, RouteClass.RouteUtil> CurrentRoute;
     public static Dictionary<int, int> SellItems = new();
 
-    public static Vector3 BaseStart = new Vector3(-268, 40, 226);
-
-    public class ItemGathered
-    {
-        public int Amount { get; set; }
-        public int ItemId { get; set; }
-        public HashSet<string> GatherNodes { get; set; } = new();
-        public bool IgnoreNode { get; set; }
-    }
+    public static Vector3 BaseStart = new(-268, 40, 226);
 
     public static Dictionary<string, ItemGathered> RouteItems = new();
     public static Dictionary<string, HashSet<ItemData.GatheringNode>> ItemNodeMap = new();
 
     /// <summary>
-    /// Returns the maximum amount of loops that you can do for this route in one set.
-    /// <para> Used to check/set that your loop counter isn't more than what if feasable.
-    /// </para>
+    ///     Returns the maximum amount of loops that you can do for this route in one set.
+    ///     <para>
+    ///         Used to check/set that your loop counter isn't more than what if feasable.
+    ///     </para>
     /// </summary>
     /// <param name="loopAmountGathered"></param>
     /// <returns> [Int] Max Loop Amount</returns>
@@ -53,15 +40,12 @@ public static class IslandHelper
     }
 
     /// <summary>
-    /// Check for how many loops in general that is needed
+    ///     Check for how many loops in general that is needed
     /// </summary>
     /// <param name="amountWanted"></param>
     /// <param name="loopAmountGathered"></param>
     /// <returns> [Int] Minimum Amount of Loops </returns>
-    public static int MinimumLoopCalc(int amountWanted, int loopAmountGathered)
-    {
-        return (amountWanted + loopAmountGathered - 1) / loopAmountGathered;
-    }
+    public static int MinimumLoopCalc(int amountWanted, int loopAmountGathered) => (amountWanted + loopAmountGathered - 1) / loopAmountGathered;
 
     public static int SellAmount(int loopAmount, int amountGathered, int itemId)
     {
@@ -92,19 +76,19 @@ public static class IslandHelper
         RouteItems.Clear();
         ItemNodeMap.Clear();
 
-        foreach (var wp in CurrentRoute.Value.RouteWaypoints)
+        foreach(RouteClass.InteractionUtil wp in CurrentRoute.Value.RouteWaypoints)
         {
             if (wp.TargetId != 0)
             {
-                var Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
+                ItemData.GatheringNode? Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
                 if (Node != null)
                 {
-                    foreach (var item in Node.ItemIds)
+                    foreach(int item in Node.ItemIds)
                     {
                         string itemName = ItemData.IslandItems[item].ItemName;
                         if (!RouteItems.ContainsKey(itemName))
                         {
-                            RouteItems[itemName] = new ItemGathered
+                            RouteItems[itemName] = new()
                             {
                                 Amount = 1,
                                 ItemId = item,
@@ -128,12 +112,12 @@ public static class IslandHelper
         }
 
         // Used to update each of the values to check and see what can be ignored
-        foreach (var kvp in RouteItems)
+        foreach(KeyValuePair<string, ItemGathered> kvp in RouteItems)
         {
-            var itemName = kvp.Key;
-            var gathered = kvp.Value;
+            string itemName = kvp.Key;
+            ItemGathered gathered = kvp.Value;
 
-            if (!ItemNodeMap.TryGetValue(itemName, out var nodes)) continue;
+            if (!ItemNodeMap.TryGetValue(itemName, out HashSet<ItemData.GatheringNode>? nodes)) continue;
 
             if (nodes.Count <= 1)
             {
@@ -146,20 +130,17 @@ public static class IslandHelper
             }
         }
 
-        foreach (var kvp in RouteItems)
+        foreach(KeyValuePair<string, ItemGathered> kvp in RouteItems)
         {
-            var itemName = kvp.Key;
-            var gathered = kvp.Value;
+            string itemName = kvp.Key;
+            ItemGathered gathered = kvp.Value;
 
             if (gathered.IgnoreNode)
                 continue;
-            else
-            {
-                var AmountWanted = C.ItemGatherAmount[itemName];
+            int AmountWanted = C.ItemGatherAmount[itemName];
 
-                GoalLoopAmount = Math.Max(GoalLoopAmount, MinimumLoopCalc(AmountWanted, gathered.Amount)); // 200 Loops
-                MaxRouteLoops = Math.Min(MaxRouteLoops, IslandLoopCalc(gathered.Amount)); // 65
-            }
+            GoalLoopAmount = Math.Max(GoalLoopAmount, MinimumLoopCalc(AmountWanted, gathered.Amount)); // 200 Loops
+            MaxRouteLoops = Math.Min(MaxRouteLoops, IslandLoopCalc(gathered.Amount)); // 65
         }
     }
 
@@ -168,28 +149,25 @@ public static class IslandHelper
         GoalLoopAmount = 0;
         MaxRouteLoops = 999;
 
-        foreach (var kvp in routeItems)
+        foreach(KeyValuePair<string, ItemGathered> kvp in routeItems)
         {
-            var itemName = kvp.Key;
-            var gathered = kvp.Value;
+            string itemName = kvp.Key;
+            ItemGathered gathered = kvp.Value;
 
             if (gathered.IgnoreNode)
                 continue;
-            else
-            {
-                var AmountWanted = C.ItemGatherAmount[itemName];
+            int AmountWanted = C.ItemGatherAmount[itemName];
 
-                GoalLoopAmount = Math.Max(GoalLoopAmount, MinimumLoopCalc(AmountWanted, gathered.Amount));
-                MaxRouteLoops = Math.Min(MaxRouteLoops, IslandLoopCalc(gathered.Amount));
-            }
+            GoalLoopAmount = Math.Max(GoalLoopAmount, MinimumLoopCalc(AmountWanted, gathered.Amount));
+            MaxRouteLoops = Math.Min(MaxRouteLoops, IslandLoopCalc(gathered.Amount));
         }
     }
 
     public static void UpdateShopCallback()
     {
         PluginLog.Debug("- - - Starting to update callbacks - - - ");
-        var callback = 0;
-        foreach (var item in ItemData.IslandItems)
+        int callback = 0;
+        foreach(KeyValuePair<int, ItemData.IslandItemInfo> item in ItemData.IslandItems)
         {
             if (Utils.IsNodeVisible("MJIPouch", 1, 8, item.Value.NodeId, 2))
             {
@@ -203,5 +181,13 @@ public static class IslandHelper
                 PluginLog.Debug($"No value was found for {item.Key}, setting to 0");
             }
         }
+    }
+
+    public class ItemGathered
+    {
+        public int Amount { get; set; }
+        public int ItemId { get; set; }
+        public HashSet<string> GatherNodes { get; set; } = new();
+        public bool IgnoreNode { get; set; }
     }
 }

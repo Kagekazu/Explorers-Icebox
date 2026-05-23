@@ -1,47 +1,46 @@
 using Dalamud.Interface.Utility.Raii;
 using ExplorersIcebox.Scheduler;
-using ExplorersIcebox.Scheduler.Tasks;
 using ExplorersIcebox.Util;
+using ExplorersIcebox.Util.PathCreation;
 using System.Collections.Generic;
-
+using System.Text.RegularExpressions;
 namespace ExplorersIcebox.Ui.MainWindow;
 
 internal class MainWindow : Window
 {
+    private readonly List<string> modeSelect = ["Ground XP", "Flying XP", "Material Grind"];
+    private int selectedModeIndex = C.ModeSelected;
+
+    public int selectedRoute = C.routeSelected;
     public MainWindow() :
         base($"Explorer's Icebox {P.GetType().Assembly.GetName().Version} ###Explorer'sIceboxMainWindow")
     {
         Flags = ImGuiWindowFlags.None;
         SizeConstraints = new()
         {
-            MinimumSize = new Vector2(300, 300),
-            MaximumSize = new Vector2(2000, 2000)
+            MinimumSize = new(300, 300),
+            MaximumSize = new(2000, 2000)
         };
         P.windowSystem.AddWindow(this);
         AllowPinning = false;
     }
+    private List<string> routeNames => EmbedRoutes.Routes.Keys.OrderBy(name => ExtractNumber(name)).ToList();
 
     public void Dispose() { }
 
     private static int ExtractNumber(string input)
     {
         // Use regex to find digits in the string
-        var match = System.Text.RegularExpressions.Regex.Match(input, @"\d+");
+        Match match = Regex.Match(input, @"\d+");
         return match.Success ? int.Parse(match.Value) : int.MinValue; // or 0 if you prefer
     }
-
-    public int selectedRoute = C.routeSelected;
-
-    private readonly List<string> modeSelect = ["Ground XP", "Flying XP", "Material Grind"];
-    private int selectedModeIndex = C.ModeSelected;
-    private List<string> routeNames => EmbedRoutes.Routes.Keys.OrderBy(name => ExtractNumber(name)).ToList();
 
     public override void Draw()
     {
         ImGui.SetNextItemWidth(200);
         if (ImGui.BeginCombo("Select Mode", modeSelect[selectedModeIndex]))
         {
-            for (int i = 0; i < modeSelect.Count; i++)
+            for(int i = 0; i < modeSelect.Count; i++)
             {
                 bool isSelected = (i == selectedModeIndex);
                 if (ImGui.Selectable(modeSelect[i], isSelected))
@@ -71,7 +70,7 @@ internal class MainWindow : Window
                 ImGui.SetNextItemWidth(200);
                 if (ImGui.BeginCombo("Select Route", routeNames[selectedRouteIndex]))
                 {
-                    for (int i = 0; i < routeNames.Count; i++)
+                    for(int i = 0; i < routeNames.Count; i++)
                     {
                         bool isSelected = (i == selectedRouteIndex);
                         if (ImGui.Selectable(routeNames[i], isSelected))
@@ -96,7 +95,7 @@ internal class MainWindow : Window
         else if (selectedModeIndex == 1)
             selectedRouteIndex = 18;
 
-        var routeSelected = EmbedRoutes.Routes.Where(x => x.Key == routeNames[selectedRouteIndex]).FirstOrDefault();
+        KeyValuePair<string, RouteClass.RouteUtil> routeSelected = EmbedRoutes.Routes.Where(x => x.Key == routeNames[selectedRouteIndex]).FirstOrDefault();
 
         if (EmbedRoutes.Routes.ContainsKey(routeSelected.Key))
         {
@@ -105,19 +104,19 @@ internal class MainWindow : Window
 
             IslandHelper.CurrentRoute = routeSelected;
 
-            foreach (var wp in routeSelected.Value.RouteWaypoints)
+            foreach(RouteClass.InteractionUtil wp in routeSelected.Value.RouteWaypoints)
             {
                 if (wp.TargetId != 0) // General check to make sure we're not looking for a null item
                 {
-                    var Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
+                    ItemData.GatheringNode? Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
                     if (Node != null)
                     {
-                        foreach (var item in Node.ItemIds)
+                        foreach(int item in Node.ItemIds)
                         {
                             string itemName = ItemData.IslandItems[item].ItemName;
                             if (!routeItems.ContainsKey(itemName))
                             {
-                                routeItems[itemName] = new IslandHelper.ItemGathered()
+                                routeItems[itemName] = new()
                                 {
                                     Amount = 1,
                                     ItemId = item,
@@ -140,12 +139,12 @@ internal class MainWindow : Window
                 }
             }
 
-            foreach (var kvp in routeItems)
+            foreach(KeyValuePair<string, IslandHelper.ItemGathered> kvp in routeItems)
             {
-                var itemName = kvp.Key;
-                var gathered = kvp.Value;
+                string itemName = kvp.Key;
+                IslandHelper.ItemGathered gathered = kvp.Value;
 
-                if (!itemNodeMap.TryGetValue(itemName, out var nodes)) continue;
+                if (!itemNodeMap.TryGetValue(itemName, out HashSet<ItemData.GatheringNode>? nodes)) continue;
 
                 if (nodes.Count <= 1)
                 {
@@ -227,7 +226,7 @@ internal class MainWindow : Window
                 ImGui.SameLine();
                 ImGui.AlignTextToFramePadding();
                 ImGuiEx.IconWithTooltip(FontAwesomeIcon.ExclamationTriangle, "The current setup is not possible without causing issues. \n" +
-                    "Please adjust either how many items to keep, or how many you want to gather. ");
+                                                                             "Please adjust either how many items to keep, or how many you want to gather. ");
                 ImGui.Spacing();
             }
 
@@ -264,7 +263,7 @@ internal class MainWindow : Window
 
                 ImGui.TableHeadersRow();
 
-                foreach (var item in routeItems)
+                foreach(KeyValuePair<string, IslandHelper.ItemGathered> item in routeItems)
                 {
                     ImGui.TableNextRow();
 
@@ -284,7 +283,7 @@ internal class MainWindow : Window
                     Utils.FancyCheckmark(item.Value.IgnoreNode);
 
                     ImGui.TableNextColumn();
-                    var GatherAmount = C.ItemGatherAmount[item.Key];
+                    int GatherAmount = C.ItemGatherAmount[item.Key];
                     ImGui.SetNextItemWidth(200);
                     using (ImRaii.Disabled(RunMaxLoops))
                     {
@@ -296,9 +295,8 @@ internal class MainWindow : Window
                     }
 
                     ImGui.TableNextColumn();
-                    if (PlayerHelper.GetItemCount(item.Value.ItemId, out var count))
+                    if (PlayerHelper.GetItemCount(item.Value.ItemId, out int count))
                         ImGui.Text($"{count}");
-
                 }
 
                 ImGui.EndTable();
@@ -306,7 +304,7 @@ internal class MainWindow : Window
         }
 
 #if DEBUG
-        foreach (var item in IslandHelper.SellItems)
+        foreach(KeyValuePair<int, int> item in IslandHelper.SellItems)
         {
             ImGui.Text($"{ItemData.IslandItems[item.Key].ItemName} | {item.Value}");
         }

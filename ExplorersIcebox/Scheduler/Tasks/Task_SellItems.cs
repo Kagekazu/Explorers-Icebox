@@ -1,7 +1,5 @@
 using Dalamud.Game.ClientState.Objects.Types;
-using ECommons.Automation;
 using ECommons.Throttlers;
-using ECommons.UIHelpers.AddonMasterImplementations;
 using ExplorersIcebox.Util;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Collections.Generic;
@@ -12,6 +10,10 @@ namespace ExplorersIcebox.Scheduler.Tasks
 {
     internal static class Task_SellItems
     {
+        // Item we last fired a shipping-dialog confirmation for. Used to keep us from
+        // firing the next item's amount into the previous item's still-closing dialog.
+        private static int lastFiredItemId = 0;
+
         public static void Enqueue()
         {
             var baseDict = EmbedRoutes.BaseRoutes["Base -> Shopkeep"];
@@ -108,26 +110,6 @@ namespace ExplorersIcebox.Scheduler.Tasks
             return false;
         }
 
-        internal static unsafe bool? SellToNpc(int itemId, int sellAmount)
-        {
-            var callback = ItemData.IslandItems[itemId].SellSlot;
-
-            if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("MJIDisposeShopShipping", out var mjiShip))
-            {
-                if (EzThrottler.Throttle($"Selling {itemId} | Amount: {sellAmount}"))
-                    Callback.Fire(mjiShip, true, 11, sellAmount);
-
-                return true;
-            }
-            else if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("MJIDisposeShop", out var mjiShop))
-            {
-                if (EzThrottler.Throttle($"Interacting with {itemId} shop sell"))
-                    Callback.Fire(mjiShop, true, 12, callback);
-            }
-
-            return false;
-        }
-
         internal static bool? SellToNpcV2()
         {
             foreach (var item in IslandHelper.SellItems)
@@ -150,16 +132,30 @@ namespace ExplorersIcebox.Scheduler.Tasks
         {
             if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("MJIDisposeShopShipping", out var mjiShip) && GenericHelpers.IsAddonReady(mjiShip))
             {
+                // The shipping dialog can briefly report "ready" while the previous item's
+                // confirmation is still closing. Don't fire the next item's amount into it.
+                if (lastFiredItemId != 0 && lastFiredItemId != itemId)
+                    return true;
+
                 if (EzThrottler.Throttle($"Selling {itemId}"))
                 {
                     Callback.Fire(mjiShip, true, 11, amount);
                     IslandHelper.SellItems[itemId] = 0;
+                    lastFiredItemId = itemId;
                 }
                 return true;
             }
             else if (GenericHelpers.TryGetAddonMaster<MJIDisposeShop>("MJIDisposeShop", out var mjiShop) && mjiShop.IsAddonReady)
             {
-                var itemName = OnPluginLoad.IslandItemInfo[itemId];
+                lastFiredItemId = 0;
+
+                if (!OnPluginLoad.IslandItemInfo.TryGetValue(itemId, out var itemName))
+                {
+                    Svc.Log.Warning($"Item {itemId} missing from IslandItemInfo, skipping sell");
+                    IslandHelper.SellItems[itemId] = 0;
+                    return true;
+                }
+
                 var entry = mjiShop.ExportItems.Where(x => x.ItemName == itemName).FirstOrDefault();
                 if (EzThrottler.Throttle("Selecting the item to ship", 1500))
                 {
@@ -172,20 +168,8 @@ namespace ExplorersIcebox.Scheduler.Tasks
             return false;
         }
 
-        internal static unsafe bool? WaitForSell()
-        {
-            if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("MJIDisposeShopShipping", out var mjiShip))
-            {
-                if (!GenericHelpers.IsAddonReady(mjiShip))
-                    return true;
-            }
-
-            return false;
-        }
-
         internal static unsafe bool? LeaveNPC(List<Vector3> List)
         {
-            var LastWP = List.Count - 1;
             if (PlayerHelper.GetDistanceToPlayer(IslandHelper.BaseStart) < 0.5f)
             {
                 Svc.Log.Information("Leave NPC will complete after this");
