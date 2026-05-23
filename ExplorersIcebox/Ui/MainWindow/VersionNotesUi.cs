@@ -11,7 +11,7 @@ internal static class VersionNotesUi
 
         if (ImGui.BeginCombo("Version Notes", VersionSelected))
         {
-            foreach(string voption in VersionOptions)
+            foreach (var voption in VersionOptions)
             {
                 // If this option is selected
                 if (ImGui.Selectable(voption, voption == VersionSelected))

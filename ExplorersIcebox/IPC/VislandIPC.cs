@@ -8,10 +8,10 @@ public class VislandIPC
     public const string Name = "visland";
     [EzIPC] public Func<bool> IsRoutePaused; // Checks to see if route is paused
 
-    [EzIPC] public Func<bool> IsRouteRunning; // Checks to see if visland is running
-    [EzIPC] public Action<bool> SetRoutePaused; // Bool to set visland route paused/not
+    [EzIPC] public Func<bool> IsRouteRunning;       // Checks to see if visland is running
+    [EzIPC] public Action<bool> SetRoutePaused;     // Bool to set visland route paused/not
     [EzIPC] public Action<string, bool> StartRoute; // string = base64 import | bool is if you only want to run it once
-    [EzIPC] public Action StopRoute; // Run this to stop a route from continuing
+    [EzIPC] public Action StopRoute;                // Run this to stop a route from continuing
     [EzIPC] public Action<string[], bool> VIsMoveTo;
     public VislandIPC()
     {

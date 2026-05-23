@@ -1,6 +1,5 @@
 using ExplorersIcebox.Enums;
 using ExplorersIcebox.Util;
-using ExplorersIcebox.Util.PathCreation;
 namespace ExplorersIcebox.Scheduler.Tasks;
 
 internal static class Task_GatherLoop
@@ -8,17 +7,17 @@ internal static class Task_GatherLoop
     public static void Enqueue()
     {
         Task_GatherMode.Enqueue();
-        foreach(RouteClass.InteractionUtil wpList in IslandHelper.CurrentRoute.Value.BaseToLocation)
+        foreach (var wpList in IslandHelper.CurrentRoute.Value.BaseToLocation)
         {
             Task_BaseToGather.Enqueue(wpList.Waypoints, wpList.Mount, wpList.Fly);
         }
 
-        int totalLoops = IslandHelper.GoalLoopAmount;
+        var totalLoops = IslandHelper.GoalLoopAmount;
         if (C.RunMaxLoops)
             totalLoops = IslandHelper.MaxRouteLoops;
-        for(int i = 0; i < totalLoops; i++)
+        for (var i = 0; i < totalLoops; i++)
         {
-            foreach(RouteClass.InteractionUtil entry in IslandHelper.CurrentRoute.Value.RouteWaypoints)
+            foreach (var entry in IslandHelper.CurrentRoute.Value.RouteWaypoints)
             {
                 Task_IslandInteract.Enqueue(entry.Waypoints, entry.TargetId, entry.Mount, entry.Fly);
             }
@@ -31,7 +30,7 @@ internal static class Task_GatherLoop
         Svc.Log.Debug($"Maximum loop count: {IslandHelper.GoalLoopAmount}");
         Svc.Log.Debug($"Minimum Possible Loops: {IslandHelper.MaxRouteLoops}");
         Svc.Log.Debug($"Current loop count: {currentLoops}");
-        int totalLoops = Math.Min(IslandHelper.GoalLoopAmount, IslandHelper.MaxRouteLoops) - currentLoops;
+        var totalLoops = Math.Min(IslandHelper.GoalLoopAmount, IslandHelper.MaxRouteLoops) - currentLoops;
         Svc.Log.Debug($"Total loops expected: {totalLoops}");
 
         return true;
@@ -41,7 +40,7 @@ internal static class Task_GatherLoop
     {
         Svc.Log.Debug($"Current loop count: {IslandHelper.LoopCounter}");
         Svc.Log.Debug($"Max total loops: {IslandHelper.GoalLoopAmount}");
-        int RepeatAmount = C.RunAmount;
+        var RepeatAmount = C.RunAmount;
         IslandHelper.LoopCounter += 1;
         if (C.RunMultiple && IslandHelper.LoopCounter < RepeatAmount)
         {

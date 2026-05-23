@@ -91,8 +91,8 @@ public sealed class ExplorersIcebox : IDalamudPlugin
 
     private static T LoadConfig<T>() where T : IYamlConfig, new()
     {
-        string path = typeof(T).GetProperty("ConfigPath")!.GetValue(null)!.ToString()!;
-        T? config = YamlConfig.Load<T>(path);
+        var path = typeof(T).GetProperty("ConfigPath")!.GetValue(null)!.ToString()!;
+        var config = YamlConfig.Load<T>(path);
 
         if (config == null)
         {
@@ -107,7 +107,7 @@ public sealed class ExplorersIcebox : IDalamudPlugin
 
     private static T LoadEmbeddedConfig<T>(string resourceName) where T : IYamlConfig, new()
     {
-        T? config = YamlConfig.LoadFromResource<T>(resourceName);
+        var config = YamlConfig.LoadFromResource<T>(resourceName);
 
         if (config == null)
         {
@@ -119,9 +119,7 @@ public sealed class ExplorersIcebox : IDalamudPlugin
         return config;
     }
 
-    public void Init()
-    {
-    }
+    public void Init() { }
 
     private void Tick(object _)
     {
@@ -141,9 +139,7 @@ public sealed class ExplorersIcebox : IDalamudPlugin
         {
             debugWindow.IsOpen = !debugWindow.IsOpen;
         }
-        else if (args.EqualsIgnoreCaseAny("s", "settings"))
-        {
-        }
+        else if (args.EqualsIgnoreCaseAny("s", "settings")) { }
         else
         {
             mainWindow.IsOpen = !mainWindow.IsOpen;

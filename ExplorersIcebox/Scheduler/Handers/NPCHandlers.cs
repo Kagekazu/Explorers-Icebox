@@ -1,4 +1,3 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.GameFunctions;
 using ExplorersIcebox.Util;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -8,8 +7,8 @@ internal static unsafe class NPCHandlers
 {
     internal static bool? InteractShopNpc()
     {
-        string OpenedShopAddonName = "ShopExchangeItem";
-        IGameObject? target = Svc.Targets.Target;
+        var OpenedShopAddonName = "ShopExchangeItem";
+        var target = Svc.Targets.Target;
         if (target != default)
         {
             if (AddonHelper.IsAddonActive("SelectString") || AddonHelper.IsAddonActive("SelectIconString") || AddonHelper.IsAddonActive(OpenedShopAddonName))

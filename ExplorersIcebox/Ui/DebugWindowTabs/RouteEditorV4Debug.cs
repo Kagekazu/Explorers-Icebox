@@ -1,5 +1,3 @@
-using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface.Utility.Raii;
 using ExplorersIcebox.Scheduler.Tasks;
 using ExplorersIcebox.Util;
@@ -25,14 +23,14 @@ internal class RouteEditorV4Debug
     private static bool RenamePopupOpen;
     private static Dictionary<string, ItemGathered> RouteItems = new();
     private static List<string> routeNames => G.Routes.Keys
-        .OrderByDescending(name => ExtractNumber(name))
-        .ToList();
+                                               .OrderByDescending(name => ExtractNumber(name))
+                                               .ToList();
 
     // Helper function to extract the number from the string
     private static int ExtractNumber(string input)
     {
         // Use regex to find digits in the string
-        Match match = Regex.Match(input, @"\d+");
+        var match = Regex.Match(input, @"\d+");
         return match.Success ? int.Parse(match.Value) : int.MinValue; // or 0 if you prefer
     }
 
@@ -94,9 +92,9 @@ internal class RouteEditorV4Debug
             ImGui.SetNextItemWidth(222);
             if (ImGui.BeginCombo("Select Route", routeNames[SelectedRouteIndex]))
             {
-                for(int i = 0; i < routeNames.Count; i++)
+                for (var i = 0; i < routeNames.Count; i++)
                 {
-                    bool isSelected = (i == SelectedRouteIndex);
+                    var isSelected = (i == SelectedRouteIndex);
                     if (ImGui.Selectable(routeNames[i], isSelected))
                     {
                         SelectedRouteIndex = i;
@@ -113,7 +111,7 @@ internal class RouteEditorV4Debug
             ImGui.SameLine();
             if (ImGui.Button("Remove Route"))
             {
-                KeyValuePair<string, RouteUtil> Route = G.Routes.Where(x => x.Key == routeNames[SelectedRouteIndex]).FirstOrDefault();
+                var Route = G.Routes.Where(x => x.Key == routeNames[SelectedRouteIndex]).FirstOrDefault();
                 G.Routes.Remove(Route);
                 SelectedRouteIndex -= 1;
                 G.Save();
@@ -122,7 +120,7 @@ internal class RouteEditorV4Debug
 
         ImGui.Separator();
 
-        KeyValuePair<string, RouteUtil> routeSelected = G.Routes.Where(x => x.Key == routeNames[SelectedRouteIndex]).FirstOrDefault();
+        var routeSelected = G.Routes.Where(x => x.Key == routeNames[SelectedRouteIndex]).FirstOrDefault();
 
         if (G.Routes.ContainsKey(routeSelected.Key))
         {
@@ -145,12 +143,12 @@ internal class RouteEditorV4Debug
 
             if (ImGui.Button("Base -> Gatherpoint"))
             {
-                foreach(InteractionUtil entry in routeSelected.Value.BaseToLocation)
+                foreach (var entry in routeSelected.Value.BaseToLocation)
                 {
-                    List<Vector3> chainWPs = entry.Waypoints;
-                    ulong targetId = entry.TargetId;
-                    bool mount = entry.Mount;
-                    bool fly = entry.Fly;
+                    var chainWPs = entry.Waypoints;
+                    var targetId = entry.TargetId;
+                    var mount = entry.Mount;
+                    var fly = entry.Fly;
 
                     Task_IslandInteract.Enqueue(chainWPs, targetId, mount, fly);
                 }
@@ -160,12 +158,12 @@ internal class RouteEditorV4Debug
 
             if (ImGui.Button("Test Route"))
             {
-                foreach(InteractionUtil entry in routeSelected.Value.RouteWaypoints)
+                foreach (var entry in routeSelected.Value.RouteWaypoints)
                 {
-                    List<Vector3> chainWPs = entry.Waypoints;
-                    ulong targetId = entry.TargetId;
-                    bool mount = entry.Mount;
-                    bool fly = entry.Fly;
+                    var chainWPs = entry.Waypoints;
+                    var targetId = entry.TargetId;
+                    var mount = entry.Mount;
+                    var fly = entry.Fly;
 
                     Task_IslandInteract.Enqueue(chainWPs, targetId, mount, fly);
                 }
@@ -176,17 +174,17 @@ internal class RouteEditorV4Debug
             {
                 Task_GatherMode.Enqueue();
 
-                foreach(InteractionUtil entry in routeSelected.Value.BaseToLocation)
+                foreach (var entry in routeSelected.Value.BaseToLocation)
                 {
                     Task_BaseToGather.Enqueue(entry.Waypoints, entry.Mount, entry.Fly);
                 }
 
-                foreach(InteractionUtil entry in routeSelected.Value.RouteWaypoints)
+                foreach (var entry in routeSelected.Value.RouteWaypoints)
                 {
-                    List<Vector3> chainWPs = entry.Waypoints;
-                    ulong targetId = entry.TargetId;
-                    bool mount = entry.Mount;
-                    bool fly = entry.Fly;
+                    var chainWPs = entry.Waypoints;
+                    var targetId = entry.TargetId;
+                    var mount = entry.Mount;
+                    var fly = entry.Fly;
 
                     Task_IslandInteract.Enqueue(chainWPs, targetId, mount, fly);
                 }
@@ -211,7 +209,7 @@ internal class RouteEditorV4Debug
                 ImGui.Text("Enter new route name:");
                 ImGui.InputText("##RenameInput", ref RenamePopupInput, 64, ImGuiInputTextFlags.EnterReturnsTrue);
 
-                bool enterPressed = ImGui.IsItemDeactivatedAfterEdit();
+                var enterPressed = ImGui.IsItemDeactivatedAfterEdit();
 
                 if (ImGui.Button("Confirm Rename") || enterPressed)
                 {
@@ -244,27 +242,27 @@ internal class RouteEditorV4Debug
 
             if (PathWP || RouteWP)
             {
-                int wpNumber = 0;
+                var wpNumber = 0;
 
-                using (PctDrawList? drawList = PctService.Draw())
+                using (var drawList = PctService.Draw())
                 {
                     if (PathWP)
                     {
-                        for(int i = 0; i < routeSelected.Value.BaseToLocation.Count; i++)
+                        for (var i = 0; i < routeSelected.Value.BaseToLocation.Count; i++)
                         {
-                            List<InteractionUtil> baseWPs = routeSelected.Value.BaseToLocation;
+                            var baseWPs = routeSelected.Value.BaseToLocation;
 
-                            InteractionUtil wpList = baseWPs[i];
+                            var wpList = baseWPs[i];
                             if (drawList == null)
                                 return;
 
-                            for(int x = 0; x < wpList.Waypoints.Count; x++)
+                            for (var x = 0; x < wpList.Waypoints.Count; x++)
                             {
-                                Vector3 wp = wpList.Waypoints[x];
+                                var wp = wpList.Waypoints[x];
 
                                 if (x < wpList.Waypoints.Count - 1)
                                 {
-                                    Vector3 nextWp = wpList.Waypoints[x + 1];
+                                    var nextWp = wpList.Waypoints[x + 1];
                                     drawList.AddLine(wp, nextWp, C.LineWidth, C.PictoLineColor);
                                 }
 
@@ -276,7 +274,7 @@ internal class RouteEditorV4Debug
 
                             if (ShowTargets && wpList.TargetId != 0)
                             {
-                                IGameObject? target = Svc.Objects.Where(x => x.GameObjectId == wpList.TargetId).FirstOrDefault();
+                                var target = Svc.Objects.Where(x => x.GameObjectId == wpList.TargetId).FirstOrDefault();
 
                                 if (target != null)
                                 {
@@ -293,21 +291,21 @@ internal class RouteEditorV4Debug
 
                     if (RouteWP)
                     {
-                        for(int i = 0; i < routeSelected.Value.RouteWaypoints.Count; i++)
+                        for (var i = 0; i < routeSelected.Value.RouteWaypoints.Count; i++)
                         {
-                            List<InteractionUtil> baseWPs = routeSelected.Value.RouteWaypoints;
+                            var baseWPs = routeSelected.Value.RouteWaypoints;
 
-                            InteractionUtil wpList = baseWPs[i];
+                            var wpList = baseWPs[i];
                             if (drawList == null)
                                 return;
 
-                            for(int x = 0; x < wpList.Waypoints.Count; x++)
+                            for (var x = 0; x < wpList.Waypoints.Count; x++)
                             {
-                                Vector3 wp = wpList.Waypoints[x];
+                                var wp = wpList.Waypoints[x];
 
                                 if (x < wpList.Waypoints.Count - 1)
                                 {
-                                    Vector3 nextWp = wpList.Waypoints[x + 1];
+                                    var nextWp = wpList.Waypoints[x + 1];
                                     drawList.AddLine(wp, nextWp, C.LineWidth, C.PictoLineColor);
                                 }
 
@@ -320,13 +318,13 @@ internal class RouteEditorV4Debug
                             // After drawing current wpList, check if there's a next one to connect to
                             if (i < routeSelected.Value.RouteWaypoints.Count - 1)
                             {
-                                InteractionUtil nextWpList = baseWPs[i + 1];
+                                var nextWpList = baseWPs[i + 1];
 
                                 // Make sure both have waypoints
                                 if (wpList.Waypoints.Count > 0 && nextWpList.Waypoints.Count > 0)
                                 {
-                                    Vector3 lastWp = wpList.Waypoints[^1]; // Last waypoint of current list
-                                    Vector3 firstNextWp = nextWpList.Waypoints[0]; // First waypoint of next list
+                                    var lastWp = wpList.Waypoints[^1];         // Last waypoint of current list
+                                    var firstNextWp = nextWpList.Waypoints[0]; // First waypoint of next list
 
                                     drawList.AddLine(lastWp, firstNextWp, C.LineWidth, C.PictoLineColor);
                                 }
@@ -334,7 +332,7 @@ internal class RouteEditorV4Debug
 
                             if (ShowTargets && wpList.TargetId != 0)
                             {
-                                IGameObject? target = Svc.Objects.Where(x => x.GameObjectId == wpList.TargetId).FirstOrDefault();
+                                var target = Svc.Objects.Where(x => x.GameObjectId == wpList.TargetId).FirstOrDefault();
 
                                 if (target != null)
                                 {
@@ -353,11 +351,11 @@ internal class RouteEditorV4Debug
 
             if (ImGui.Button($"Add Route###{routeNames[SelectedRouteIndex]}"))
             {
-                IPlayerCharacter? newTarget = Svc.Objects.LocalPlayer;
+                var newTarget = Svc.Objects.LocalPlayer;
                 ulong targetId = 0;
-                string targetName = string.Empty;
+                var targetName = string.Empty;
                 List<Vector3> currentPlayerPos = new();
-                WaypointAction action = WaypointAction.None;
+                var action = WaypointAction.None;
 
                 if (newTarget != null && newTarget.TargetObjectId != 0)
                 {
@@ -383,7 +381,7 @@ internal class RouteEditorV4Debug
                 G.Save();
             }
 
-            Vector3 playerPos = Svc.Objects.LocalPlayer?.Position ?? new Vector3(0, 0, 0);
+            var playerPos = Svc.Objects.LocalPlayer?.Position ?? new Vector3(0, 0, 0);
             ImGui.Text($"Player POS: {playerPos.X:F1}, {playerPos.Y:F1}, {playerPos.Z:F1}");
 
             if (ImGui.CollapsingHeader("Item Count"))
@@ -391,16 +389,16 @@ internal class RouteEditorV4Debug
                 Dictionary<string, ItemGathered> tempRouteItems = new();
                 Dictionary<string, HashSet<ItemData.GatheringNode>> tempItemNodeMap = new();
 
-                foreach(InteractionUtil wp in routeSelected.Value.RouteWaypoints)
+                foreach (var wp in routeSelected.Value.RouteWaypoints)
                 {
                     if (wp.TargetId != 0)
                     {
-                        ItemData.GatheringNode? Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
+                        var Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
                         if (Node != null)
                         {
-                            foreach(int item in Node.ItemIds)
+                            foreach (var item in Node.ItemIds)
                             {
-                                string itemName = ItemData.IslandItems[item].ItemName;
+                                var itemName = ItemData.IslandItems[item].ItemName;
                                 if (!tempRouteItems.ContainsKey(itemName))
                                 {
                                     tempRouteItems[itemName] = new()
@@ -425,12 +423,12 @@ internal class RouteEditorV4Debug
                     }
                 }
 
-                foreach(KeyValuePair<string, ItemGathered> kvp in tempRouteItems)
+                foreach (var kvp in tempRouteItems)
                 {
-                    string itemName = kvp.Key;
-                    ItemGathered gathered = kvp.Value;
+                    var itemName = kvp.Key;
+                    var gathered = kvp.Value;
 
-                    if (!tempItemNodeMap.TryGetValue(itemName, out HashSet<ItemData.GatheringNode>? nodes)) continue;
+                    if (!tempItemNodeMap.TryGetValue(itemName, out var nodes)) continue;
 
                     if (nodes.Count <= 1)
                     {
@@ -455,7 +453,7 @@ internal class RouteEditorV4Debug
 
                     ImGui.TableHeadersRow();
 
-                    foreach(KeyValuePair<string, ItemGathered> item in RouteItems)
+                    foreach (var item in RouteItems)
                     {
                         ImGui.TableNextRow();
 
@@ -472,9 +470,9 @@ internal class RouteEditorV4Debug
                         Utils.FancyCheckmark(item.Value.IgnoreNode);
 
                         ImGui.TableNextColumn();
-                        HashSet<ItemData.GatheringNode> entry = tempItemNodeMap[item.Key];
-                        string nodeNames = string.Empty;
-                        foreach(ItemData.GatheringNode node in entry)
+                        var entry = tempItemNodeMap[item.Key];
+                        var nodeNames = string.Empty;
+                        foreach (var node in entry)
                         {
                             nodeNames += $"{node.GatherName} [{node.ItemIds.Count}], ";
                         }
@@ -485,9 +483,9 @@ internal class RouteEditorV4Debug
                 }
             }
 
-            for(int i = 0; i < routeSelected.Value.BaseToLocation.Count; i++)
+            for (var i = 0; i < routeSelected.Value.BaseToLocation.Count; i++)
             {
-                InteractionUtil BaseList = routeSelected.Value.BaseToLocation[i];
+                var BaseList = routeSelected.Value.BaseToLocation[i];
 
                 if (ImGui.CollapsingHeader($"Base -> Location #{i} ###Base_Location_{i}"))
                 {
@@ -497,8 +495,8 @@ internal class RouteEditorV4Debug
                         G.Save();
                     }
 
-                    bool Mount = BaseList.Mount;
-                    bool Fly = BaseList.Fly;
+                    var Mount = BaseList.Mount;
+                    var Fly = BaseList.Fly;
 
                     if (ImGui.Checkbox("Mount", ref Mount))
                     {
@@ -523,7 +521,7 @@ internal class RouteEditorV4Debug
                     ImGui.SetNextItemWidth(150);
                     if (ImGui.BeginCombo($"##Action{i}", BaseList.Action.ToString()))
                     {
-                        foreach(WaypointAction action in Enum.GetValues(typeof(WaypointAction)))
+                        foreach (WaypointAction action in Enum.GetValues(typeof(WaypointAction)))
                         {
                             if (ImGui.Selectable(action.ToString(), action == BaseList.Action))
                             {
@@ -541,7 +539,7 @@ internal class RouteEditorV4Debug
                         ImGui.SameLine();
                         if (ImGui.Button("Adjust Target"))
                         {
-                            IPlayerCharacter? newTarget = Svc.Objects.LocalPlayer;
+                            var newTarget = Svc.Objects.LocalPlayer;
                             if (newTarget != null && newTarget.TargetObjectId != 0)
                             {
                                 BaseList.TargetId = newTarget.TargetObjectId;
@@ -562,11 +560,11 @@ internal class RouteEditorV4Debug
 
                         ImGui.TableHeadersRow();
 
-                        for(int j = 0; j < BaseList.Waypoints.Count; j++)
+                        for (var j = 0; j < BaseList.Waypoints.Count; j++)
                         {
                             ImGui.TableNextRow();
 
-                            Vector3 wp = BaseList.Waypoints[j];
+                            var wp = BaseList.Waypoints[j];
 
                             // Waypoint Info
                             ImGui.TableSetColumnIndex(0);
@@ -622,9 +620,9 @@ internal class RouteEditorV4Debug
                 }
             }
 
-            for(int i = 0; i < routeSelected.Value.RouteWaypoints.Count; i++)
+            for (var i = 0; i < routeSelected.Value.RouteWaypoints.Count; i++)
             {
-                InteractionUtil RouteWpList = routeSelected.Value.RouteWaypoints[i];
+                var RouteWpList = routeSelected.Value.RouteWaypoints[i];
 
                 if (ImGui.CollapsingHeader($"Route {i + 1} | {RouteWpList.Name} ###RouteList_{i}"))
                 {
@@ -635,7 +633,7 @@ internal class RouteEditorV4Debug
                     }
 
                     ImGui.SameLine();
-                    bool shiftHeld = ImGui.GetIO().KeyShift;
+                    var shiftHeld = ImGui.GetIO().KeyShift;
                     using (ImRaii.Disabled(!shiftHeld))
                     {
                         if (ImGui.Button($"Remove Route###Route{i + 1}"))
@@ -645,8 +643,8 @@ internal class RouteEditorV4Debug
                         }
                     }
 
-                    bool Mount = RouteWpList.Mount;
-                    bool Fly = RouteWpList.Fly;
+                    var Mount = RouteWpList.Mount;
+                    var Fly = RouteWpList.Fly;
 
                     if (ImGui.Checkbox("Mount", ref Mount))
                     {
@@ -671,7 +669,7 @@ internal class RouteEditorV4Debug
                     ImGui.SetNextItemWidth(150);
                     if (ImGui.BeginCombo($"##Action{i}_Route", RouteWpList.Action.ToString()))
                     {
-                        foreach(WaypointAction action in Enum.GetValues(typeof(WaypointAction)))
+                        foreach (WaypointAction action in Enum.GetValues(typeof(WaypointAction)))
                         {
                             if (ImGui.Selectable(action.ToString(), action == RouteWpList.Action))
                             {
@@ -689,7 +687,7 @@ internal class RouteEditorV4Debug
                         ImGui.SameLine();
                         if (ImGui.Button("Adjust Target"))
                         {
-                            IPlayerCharacter? newTarget = Svc.Objects.LocalPlayer;
+                            var newTarget = Svc.Objects.LocalPlayer;
                             if (newTarget != null && newTarget.TargetObjectId != 0)
                             {
                                 RouteWpList.TargetId = newTarget.TargetObjectId;
@@ -710,11 +708,11 @@ internal class RouteEditorV4Debug
 
                         ImGui.TableHeadersRow();
 
-                        for(int j = 0; j < RouteWpList.Waypoints.Count; j++)
+                        for (var j = 0; j < RouteWpList.Waypoints.Count; j++)
                         {
                             ImGui.TableNextRow();
 
-                            Vector3 wp = RouteWpList.Waypoints[j];
+                            var wp = RouteWpList.Waypoints[j];
 
                             // Waypoint Info
                             ImGui.TableSetColumnIndex(0);

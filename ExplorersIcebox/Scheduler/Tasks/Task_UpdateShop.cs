@@ -17,11 +17,11 @@ internal static class Task_UpdateShop
 
     internal static unsafe bool? OpenPouch()
     {
-        if (TryGetAddonByName<AtkUnitBase>("MJIPouch", out AtkUnitBase* mjiPouch) && IsAddonReady(mjiPouch))
+        if (TryGetAddonByName("MJIPouch", out AtkUnitBase* mjiPouch) && IsAddonReady(mjiPouch))
         {
             return true;
         }
-        if (TryGetAddonMaster<MJIHud>("MJIHud", out MJIHud mjiHud) && mjiHud.IsAddonReady)
+        if (TryGetAddonMaster("MJIHud", out MJIHud mjiHud) && mjiHud.IsAddonReady)
         {
             if (EzThrottler.Throttle("Open MJI Inventory Pouch"))
             {
@@ -34,7 +34,7 @@ internal static class Task_UpdateShop
 
     internal static unsafe bool? UpdateCallbacks()
     {
-        if (TryGetAddonByName<AtkUnitBase>("MJIPouch", out AtkUnitBase* mjiPouch) && IsAddonReady(mjiPouch))
+        if (TryGetAddonByName("MJIPouch", out AtkUnitBase* mjiPouch) && IsAddonReady(mjiPouch))
         {
             IslandHelper.UpdateShopCallback();
             return true;
@@ -45,7 +45,7 @@ internal static class Task_UpdateShop
 
     internal static unsafe bool? ClosePouch()
     {
-        if (TryGetAddonByName<AtkUnitBase>("MJIPouch", out AtkUnitBase* mjiPouch))
+        if (TryGetAddonByName("MJIPouch", out AtkUnitBase* mjiPouch))
         {
             if (IsAddonReady(mjiPouch))
             {

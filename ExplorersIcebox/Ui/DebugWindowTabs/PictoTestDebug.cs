@@ -1,13 +1,12 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using Pictomancy;
 namespace ExplorersIcebox.Ui.DebugWindowTabs;
 
 internal class PictoTestDebug
 {
     private static Vector4 ImGuiCircleCol = FromUintABGR(C.PictoCircleColor); // ABGR Red
-    private static Vector4 ImGuiDotColor = FromUintABGR(C.PictoWPColor); // ABGR Red
-    private static Vector4 ImGuiLineColor = FromUintABGR(C.PictoLineColor); // ABGR Red
-    private static Vector4 ImGuiTextColor = FromUintABGR(C.PictoTextCol); // ABGR Red
+    private static Vector4 ImGuiDotColor = FromUintABGR(C.PictoWPColor);      // ABGR Red
+    private static Vector4 ImGuiLineColor = FromUintABGR(C.PictoLineColor);   // ABGR Red
+    private static Vector4 ImGuiTextColor = FromUintABGR(C.PictoTextCol);     // ABGR Red
     private static bool ShowDot;
     private static float DotRadius = C.DotRadius;
     private static bool ShowLine;
@@ -23,19 +22,19 @@ internal class PictoTestDebug
     private static float FloatTextScale;
     private static uint ToUintABGR(Vector4 col)
     {
-        byte a = (byte)(col.W * 255);
-        byte b = (byte)(col.Z * 255);
-        byte g = (byte)(col.Y * 255);
-        byte r = (byte)(col.X * 255);
+        var a = (byte)(col.W * 255);
+        var b = (byte)(col.Z * 255);
+        var g = (byte)(col.Y * 255);
+        var r = (byte)(col.X * 255);
         return (uint)((a << 24) | (b << 16) | (g << 8) | r);
     }
 
     private static Vector4 FromUintABGR(uint color)
     {
-        float a = ((color >> 24) & 0xFF) / 255f;
-        float b = ((color >> 16) & 0xFF) / 255f;
-        float g = ((color >> 8) & 0xFF) / 255f;
-        float r = (color & 0xFF) / 255f;
+        var a = ((color >> 24) & 0xFF) / 255f;
+        var b = ((color >> 16) & 0xFF) / 255f;
+        var g = ((color >> 8) & 0xFF) / 255f;
+        var r = (color & 0xFF) / 255f;
         return new(r, g, b, a);
     }
 
@@ -64,18 +63,18 @@ internal class PictoTestDebug
             C.Save();
         }
 
-        IGameObject? target = Svc.Targets.Target;
-        Vector3 PlayerPos = Svc.Objects.LocalPlayer?.Position ?? new Vector3(0);
+        var target = Svc.Targets.Target;
+        var PlayerPos = Svc.Objects.LocalPlayer?.Position ?? new Vector3(0);
 
         if (target != null)
         {
-            using (PctDrawList? drawList = PctService.Draw())
+            using (var drawList = PctService.Draw())
             {
                 if (drawList == null)
                     return;
                 // Draw a circle around a GameObject's hitbox
-                Vector3 worldPosition = target.Position;
-                float radius = target.HitboxRadius;
+                var worldPosition = target.Position;
+                var radius = target.HitboxRadius;
 
                 ImGui.Checkbox("Show Dot", ref ShowDot);
                 ImGui.SameLine();

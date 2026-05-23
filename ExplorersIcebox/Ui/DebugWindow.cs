@@ -28,17 +28,17 @@ internal class DebugWindow : Window
 
     public override void Draw()
     {
-        float spacing = 10f;
-        float leftPanelWidth = 200f;
-        float rightPanelWidth = ImGui.GetContentRegionAvail().X - leftPanelWidth - spacing;
-        float childHeight = ImGui.GetContentRegionAvail().Y;
+        var spacing = 10f;
+        var leftPanelWidth = 200f;
+        var rightPanelWidth = ImGui.GetContentRegionAvail().X - leftPanelWidth - spacing;
+        var childHeight = ImGui.GetContentRegionAvail().Y;
 
         if (ImGui.BeginChild("DebugSelector", new(leftPanelWidth, childHeight), true))
         {
-            for(int i = 0; i < debugTypes.Length; i++)
+            for (var i = 0; i < debugTypes.Length; i++)
             {
-                bool isSelected = (selectedDebugIndex == i);
-                string label = isSelected ? $"→ {debugTypes[i]}" : $"   {debugTypes[i]}"; // Add space for alignment
+                var isSelected = (selectedDebugIndex == i);
+                var label = isSelected ? $"→ {debugTypes[i]}" : $"   {debugTypes[i]}"; // Add space for alignment
 
                 if (ImGui.Selectable(label, isSelected))
                 {

@@ -14,8 +14,8 @@ internal static class Task_BaseToGather
 
     internal static unsafe bool? BaseToGather(List<Vector3> BaseWPList, bool mount, bool fly)
     {
-        Vector3 lastWP = BaseWPList.Last();
-        bool PlayerMounted = Svc.Condition[ConditionFlag.Mounted]; // Quick and easy way to just access if you are mounted quickly
+        var lastWP = BaseWPList.Last();
+        var PlayerMounted = Svc.Condition[ConditionFlag.Mounted]; // Quick and easy way to just access if you are mounted quickly
 
         if (PlayerHelper.GetDistanceToPlayer(lastWP) < 0.5f)
         {

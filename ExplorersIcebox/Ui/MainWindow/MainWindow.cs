@@ -1,7 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using ExplorersIcebox.Scheduler;
 using ExplorersIcebox.Util;
-using ExplorersIcebox.Util.PathCreation;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 namespace ExplorersIcebox.Ui.MainWindow;
@@ -31,7 +30,7 @@ internal class MainWindow : Window
     private static int ExtractNumber(string input)
     {
         // Use regex to find digits in the string
-        Match match = Regex.Match(input, @"\d+");
+        var match = Regex.Match(input, @"\d+");
         return match.Success ? int.Parse(match.Value) : int.MinValue; // or 0 if you prefer
     }
 
@@ -40,9 +39,9 @@ internal class MainWindow : Window
         ImGui.SetNextItemWidth(200);
         if (ImGui.BeginCombo("Select Mode", modeSelect[selectedModeIndex]))
         {
-            for(int i = 0; i < modeSelect.Count; i++)
+            for (var i = 0; i < modeSelect.Count; i++)
             {
-                bool isSelected = (i == selectedModeIndex);
+                var isSelected = (i == selectedModeIndex);
                 if (ImGui.Selectable(modeSelect[i], isSelected))
                 {
                     C.ModeSelected = i;
@@ -59,9 +58,9 @@ internal class MainWindow : Window
             ImGui.EndCombo();
         }
 
-        bool DisableSelection = selectedModeIndex < modeSelect.Count - 1;
+        var DisableSelection = selectedModeIndex < modeSelect.Count - 1;
 
-        int selectedRouteIndex = C.routeSelected;
+        var selectedRouteIndex = C.routeSelected;
 
         if (selectedModeIndex == 2)
         {
@@ -70,9 +69,9 @@ internal class MainWindow : Window
                 ImGui.SetNextItemWidth(200);
                 if (ImGui.BeginCombo("Select Route", routeNames[selectedRouteIndex]))
                 {
-                    for(int i = 0; i < routeNames.Count; i++)
+                    for (var i = 0; i < routeNames.Count; i++)
                     {
-                        bool isSelected = (i == selectedRouteIndex);
+                        var isSelected = (i == selectedRouteIndex);
                         if (ImGui.Selectable(routeNames[i], isSelected))
                         {
                             selectedRouteIndex = i;
@@ -95,7 +94,7 @@ internal class MainWindow : Window
         else if (selectedModeIndex == 1)
             selectedRouteIndex = 18;
 
-        KeyValuePair<string, RouteClass.RouteUtil> routeSelected = EmbedRoutes.Routes.Where(x => x.Key == routeNames[selectedRouteIndex]).FirstOrDefault();
+        var routeSelected = EmbedRoutes.Routes.Where(x => x.Key == routeNames[selectedRouteIndex]).FirstOrDefault();
 
         if (EmbedRoutes.Routes.ContainsKey(routeSelected.Key))
         {
@@ -104,16 +103,16 @@ internal class MainWindow : Window
 
             IslandHelper.CurrentRoute = routeSelected;
 
-            foreach(RouteClass.InteractionUtil wp in routeSelected.Value.RouteWaypoints)
+            foreach (var wp in routeSelected.Value.RouteWaypoints)
             {
                 if (wp.TargetId != 0) // General check to make sure we're not looking for a null item
                 {
-                    ItemData.GatheringNode? Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
+                    var Node = ItemData.IslandNodeInfo.Where(x => x.Nodes.Contains(wp.TargetId)).FirstOrDefault();
                     if (Node != null)
                     {
-                        foreach(int item in Node.ItemIds)
+                        foreach (var item in Node.ItemIds)
                         {
-                            string itemName = ItemData.IslandItems[item].ItemName;
+                            var itemName = ItemData.IslandItems[item].ItemName;
                             if (!routeItems.ContainsKey(itemName))
                             {
                                 routeItems[itemName] = new()
@@ -139,12 +138,12 @@ internal class MainWindow : Window
                 }
             }
 
-            foreach(KeyValuePair<string, IslandHelper.ItemGathered> kvp in routeItems)
+            foreach (var kvp in routeItems)
             {
-                string itemName = kvp.Key;
-                IslandHelper.ItemGathered gathered = kvp.Value;
+                var itemName = kvp.Key;
+                var gathered = kvp.Value;
 
-                if (!itemNodeMap.TryGetValue(itemName, out HashSet<ItemData.GatheringNode>? nodes)) continue;
+                if (!itemNodeMap.TryGetValue(itemName, out var nodes)) continue;
 
                 if (nodes.Count <= 1)
                 {
@@ -156,14 +155,14 @@ internal class MainWindow : Window
                 }
             }
 
-            bool SkipSell = C.SkipSell;
+            var SkipSell = C.SkipSell;
             if (ImGui.Checkbox("Skip Selling Items", ref SkipSell))
             {
                 C.SkipSell = SkipSell;
                 C.Save();
             }
 
-            bool RunMaxLoops = C.RunMaxLoops;
+            var RunMaxLoops = C.RunMaxLoops;
             if (ImGui.Checkbox("Run Maximum Loops", ref RunMaxLoops))
             {
                 C.RunMaxLoops = RunMaxLoops;
@@ -174,7 +173,7 @@ internal class MainWindow : Window
             if (RunMaxLoops)
                 IslandHelper.GoalLoopAmount = IslandHelper.MaxRouteLoops;
 
-            bool runMultiple = C.RunMultiple;
+            var runMultiple = C.RunMultiple;
             if (ImGui.Checkbox("Repeat Loop", ref runMultiple))
             {
                 C.RunMultiple = runMultiple;
@@ -183,7 +182,7 @@ internal class MainWindow : Window
             if (runMultiple)
             {
                 ImGui.SameLine();
-                int RunAmount = C.RunAmount;
+                var RunAmount = C.RunAmount;
                 ImGui.SetNextItemWidth(100);
                 if (ImGui.InputInt("###RunMultipleAmount", ref RunAmount))
                 {
@@ -194,7 +193,7 @@ internal class MainWindow : Window
                 ImGui.Text("Amount of times");
             }
 
-            int MinItemKeep = C.MinimumItemKeep;
+            var MinItemKeep = C.MinimumItemKeep;
 
             using (ImRaii.Disabled(SkipSell))
             {
@@ -205,7 +204,7 @@ internal class MainWindow : Window
                     C.Save();
                 }
             }
-            bool DisableButtons = IslandHelper.GoalLoopAmount > IslandHelper.MaxRouteLoops || IslandHelper.MaxRouteLoops == 0 || IslandHelper.GoalLoopAmount == 0;
+            var DisableButtons = IslandHelper.GoalLoopAmount > IslandHelper.MaxRouteLoops || IslandHelper.MaxRouteLoops == 0 || IslandHelper.GoalLoopAmount == 0;
 
             using (ImRaii.Disabled(DisableButtons))
             {
@@ -263,7 +262,7 @@ internal class MainWindow : Window
 
                 ImGui.TableHeadersRow();
 
-                foreach(KeyValuePair<string, IslandHelper.ItemGathered> item in routeItems)
+                foreach (var item in routeItems)
                 {
                     ImGui.TableNextRow();
 
@@ -283,7 +282,7 @@ internal class MainWindow : Window
                     Utils.FancyCheckmark(item.Value.IgnoreNode);
 
                     ImGui.TableNextColumn();
-                    int GatherAmount = C.ItemGatherAmount[item.Key];
+                    var GatherAmount = C.ItemGatherAmount[item.Key];
                     ImGui.SetNextItemWidth(200);
                     using (ImRaii.Disabled(RunMaxLoops))
                     {
@@ -295,7 +294,7 @@ internal class MainWindow : Window
                     }
 
                     ImGui.TableNextColumn();
-                    if (PlayerHelper.GetItemCount(item.Value.ItemId, out int count))
+                    if (PlayerHelper.GetItemCount(item.Value.ItemId, out var count))
                         ImGui.Text($"{count}");
                 }
 
@@ -304,7 +303,7 @@ internal class MainWindow : Window
         }
 
 #if DEBUG
-        foreach(KeyValuePair<int, int> item in IslandHelper.SellItems)
+        foreach (var item in IslandHelper.SellItems)
         {
             ImGui.Text($"{ItemData.IslandItems[item.Key].ItemName} | {item.Value}");
         }

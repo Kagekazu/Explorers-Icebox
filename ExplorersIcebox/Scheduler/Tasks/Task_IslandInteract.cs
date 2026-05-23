@@ -21,8 +21,8 @@ internal static class Task_IslandInteract
 
     internal static unsafe bool? QueueNavmesh2(List<Vector3> List, bool mount, bool fly)
     {
-        bool PlayerMounted = Svc.Condition[ConditionFlag.Mounted]; // Quick and easy way to just access if you are mounted quickly
-        int count = List.Count - 1;
+        var PlayerMounted = Svc.Condition[ConditionFlag.Mounted]; // Quick and easy way to just access if you are mounted quickly
+        var count = List.Count - 1;
 
         if (P.navmesh.IsRunning() && ((PlayerMounted && mount) || !mount))
         {
@@ -103,7 +103,7 @@ internal static class Task_IslandInteract
     internal static bool? TargetV2(ulong gameObjectId)
     {
         IGameObject? gameObject = null;
-        ulong currentTarget = Svc.Targets.Target?.GameObjectId ?? 0;
+        var currentTarget = Svc.Targets.Target?.GameObjectId ?? 0;
         Utils.TryGetObjectByGameObjectId(gameObjectId, out gameObject);
 
 #if DEBUG

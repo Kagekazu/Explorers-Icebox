@@ -40,7 +40,7 @@ internal class IslandItemInfoDebug
 
     public static void Draw()
     {
-        foreach(KeyValuePair<int, ItemData.IslandItemInfo> item in ItemData.IslandItems)
+        foreach (var item in ItemData.IslandItems)
         {
             if (!ItemCount.ContainsKey(item.Value.ItemName))
             {
@@ -50,14 +50,14 @@ internal class IslandItemInfoDebug
 
         if (ImGui.Button("Update Item Amounts"))
         {
-            Dictionary<int, ItemData.IslandItemInfo> IslandItems = ItemData.IslandItems;
+            var IslandItems = ItemData.IslandItems;
 
-            foreach(ItemData.GatheringNode gatherable in ItemData.IslandNodeInfo)
+            foreach (var gatherable in ItemData.IslandNodeInfo)
             {
-                int amount = gatherable.Nodes.Count;
-                foreach(int type in gatherable.ItemIds)
+                var amount = gatherable.Nodes.Count;
+                foreach (var type in gatherable.ItemIds)
                 {
-                    string itemName = IslandItems[type].ItemName;
+                    var itemName = IslandItems[type].ItemName;
                     ItemCount[itemName] += amount;
                 }
             }
@@ -77,7 +77,7 @@ internal class IslandItemInfoDebug
 
             ImGui.TableHeadersRow();
 
-            foreach(KeyValuePair<string, int> item in ItemCount)
+            foreach (var item in ItemCount)
             {
                 ImGui.TableNextRow();
 

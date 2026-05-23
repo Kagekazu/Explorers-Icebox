@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Objects.Enums;
-using Dalamud.Game.ClientState.Objects.Types;
 using ExplorersIcebox.Util;
 using System.Collections.Generic;
 namespace ExplorersIcebox.Ui.DebugWindowTabs;
@@ -43,17 +42,17 @@ internal class IslandGatherPointData
 
     public static void GatherPointDataDraw()
     {
-        IEnumerable<IGameObject> objects = Svc.Objects.Where(e => e.ObjectKind == ObjectKind.CardStand);
+        var objects = Svc.Objects.Where(e => e.ObjectKind == ObjectKind.CardStand);
         ImGui.DragFloat("Distance to object", ref Distance);
 
-        foreach(IGameObject obj in objects)
+        foreach (var obj in objects)
         {
             if (PlayerHelper.GetDistanceToPlayer(obj.Position) > Distance)
             {
                 continue;
             }
 
-            if (GatherNodeIds.TryGetValue(obj.Name.ToString(), out HashSet<ulong>? idSet))
+            if (GatherNodeIds.TryGetValue(obj.Name.ToString(), out var idSet))
             {
                 idSet.Add(obj.GameObjectId);
             }
@@ -75,7 +74,7 @@ internal class IslandGatherPointData
 
                 ImGui.TableHeadersRow();
 
-                foreach(IGameObject obj in objects)
+                foreach (var obj in objects)
                 {
                     if (PlayerHelper.GetDistanceToPlayer(obj.Position) > Distance)
                     {
@@ -105,21 +104,21 @@ internal class IslandGatherPointData
 
         if (ImGui.Button("Clear Listing"))
         {
-            foreach(KeyValuePair<string, HashSet<ulong>> entry in GatherNodeIds)
+            foreach (var entry in GatherNodeIds)
             {
                 entry.Value.Clear();
             }
         }
 
-        foreach(KeyValuePair<string, HashSet<ulong>> entry in GatherNodeIds)
+        foreach (var entry in GatherNodeIds)
         {
             ImGui.AlignTextToFramePadding();
             ImGui.Text($"Item: {entry.Key} | Amount Found: {entry.Value.Count}");
             ImGui.SameLine();
             if (ImGui.Button($"Copy List ###List_{entry.Key}"))
             {
-                string nodeIds = string.Empty;
-                foreach(ulong id in entry.Value)
+                var nodeIds = string.Empty;
+                foreach (var id in entry.Value)
                 {
                     nodeIds += id + ", ";
                 }

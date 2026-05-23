@@ -27,9 +27,9 @@ public static class OnPluginLoad
 
     public static void UpdateItemNames()
     {
-        foreach(int itemId in ItemIds)
+        foreach (var itemId in ItemIds)
         {
-            string itemName = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == itemId).FirstOrDefault().Name.ToString();
+            var itemName = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == itemId).FirstOrDefault().Name.ToString();
             IslandItemInfo[itemId] = itemName;
         }
     }

@@ -6,7 +6,7 @@ internal class EcomsTestingDebug
 {
     public static void Draw()
     {
-        if (TryGetAddonMaster<MJIHud>("MJIHud", out MJIHud mjiHud) && mjiHud.IsAddonReady)
+        if (TryGetAddonMaster("MJIHud", out MJIHud mjiHud) && mjiHud.IsAddonReady)
         {
             ImGui.Text($"Current Level: {mjiHud.SanctuaryRank}");
             ImGui.Text($"Current Island XP: {mjiHud.CurrentIslandXP} | {mjiHud.NextIslandLevelXP}");

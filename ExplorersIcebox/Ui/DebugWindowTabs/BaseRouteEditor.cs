@@ -1,4 +1,3 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface.Utility.Raii;
 using ExplorersIcebox.Scheduler.Tasks;
 using ExplorersIcebox.Util.PathCreation;
@@ -47,9 +46,9 @@ internal class BaseRouteEditor
             ImGui.SetNextItemWidth(222);
             if (ImGui.BeginCombo("Select Route", BaseRouteNames[SelectedRouteIndex]))
             {
-                for(int i = 0; i < BaseRouteNames.Count; i++)
+                for (var i = 0; i < BaseRouteNames.Count; i++)
                 {
-                    bool isSelected = (i == SelectedRouteIndex);
+                    var isSelected = (i == SelectedRouteIndex);
                     if (ImGui.Selectable(BaseRouteNames[i], isSelected))
                     {
                         SelectedRouteIndex = i;
@@ -66,7 +65,7 @@ internal class BaseRouteEditor
             ImGui.SameLine();
             if (ImGui.Button("Remove Route"))
             {
-                KeyValuePair<string, RouteClass.RouteUtil> Route = G.Routes.Where(x => x.Key == BaseRouteNames[SelectedRouteIndex]).FirstOrDefault();
+                var Route = G.Routes.Where(x => x.Key == BaseRouteNames[SelectedRouteIndex]).FirstOrDefault();
                 G.Routes.Remove(Route);
                 SelectedRouteIndex -= 1;
                 G.Save();
@@ -75,7 +74,7 @@ internal class BaseRouteEditor
 
         ImGui.Separator();
 
-        KeyValuePair<string, RouteClass.InteractionUtil> routeSelected = G.BaseRoutes.Where(x => x.Key == BaseRouteNames[SelectedRouteIndex]).FirstOrDefault();
+        var routeSelected = G.BaseRoutes.Where(x => x.Key == BaseRouteNames[SelectedRouteIndex]).FirstOrDefault();
 
         if (routeSelected.Key != null)
         {
@@ -105,7 +104,7 @@ internal class BaseRouteEditor
                 if (ImGui.Button("Reverse Route"))
                 {
                     List<Vector3> wpList = new();
-                    foreach(Vector3 waypoint in routeSelected.Value.Waypoints)
+                    foreach (var waypoint in routeSelected.Value.Waypoints)
                     {
                         wpList.Add(waypoint);
                     }
@@ -122,20 +121,20 @@ internal class BaseRouteEditor
 
                 if (PathWP)
                 {
-                    int wpNumber = 0;
+                    var wpNumber = 0;
 
-                    using (PctDrawList? drawList = PctService.Draw())
+                    using (var drawList = PctService.Draw())
                     {
                         if (drawList == null)
                             return;
 
-                        for(int x = 0; x < routeSelected.Value.Waypoints.Count; x++)
+                        for (var x = 0; x < routeSelected.Value.Waypoints.Count; x++)
                         {
-                            Vector3 wp = routeSelected.Value.Waypoints[x];
+                            var wp = routeSelected.Value.Waypoints[x];
 
                             if (x < routeSelected.Value.Waypoints.Count - 1)
                             {
-                                Vector3 nextWp = routeSelected.Value.Waypoints[x + 1];
+                                var nextWp = routeSelected.Value.Waypoints[x + 1];
                                 drawList.AddLine(wp, nextWp, C.LineWidth, C.PictoLineColor);
                             }
 
@@ -146,7 +145,7 @@ internal class BaseRouteEditor
 
                             if (ShowTargets && routeSelected.Value.TargetId != 0)
                             {
-                                IGameObject? target = Svc.Objects.Where(x => x.BaseId == routeSelected.Value.TargetId).FirstOrDefault();
+                                var target = Svc.Objects.Where(x => x.BaseId == routeSelected.Value.TargetId).FirstOrDefault();
 
                                 if (target != null)
                                 {
@@ -213,9 +212,9 @@ internal class BaseRouteEditor
 
                     ImGui.TableHeadersRow();
 
-                    for(int i = 0; i < routeSelected.Value.Waypoints.Count; i++)
+                    for (var i = 0; i < routeSelected.Value.Waypoints.Count; i++)
                     {
-                        Vector3 wp = routeSelected.Value.Waypoints[i];
+                        var wp = routeSelected.Value.Waypoints[i];
 
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);

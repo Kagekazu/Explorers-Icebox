@@ -1,6 +1,5 @@
 using ExplorersIcebox.Enums;
 using ExplorersIcebox.Util;
-using System.Collections.Generic;
 namespace ExplorersIcebox.Scheduler.Tasks;
 
 internal static class Task_SellCheck
@@ -17,24 +16,25 @@ internal static class Task_SellCheck
         Svc.Log.Information("Starting Sell Check");
         IslandHelper.SellItems.Clear();
         SellToShop = false;
-        int LoopCount = Math.Min(IslandHelper.GoalLoopAmount, IslandHelper.MaxRouteLoops);
+        var LoopCount = Math.Min(IslandHelper.GoalLoopAmount, IslandHelper.MaxRouteLoops);
         if (C.RunMaxLoops)
             LoopCount = IslandHelper.MaxRouteLoops;
 
 
         IslandHelper.UpdateNumbers();
-        foreach(KeyValuePair<string, IslandHelper.ItemGathered> item in IslandHelper.RouteItems)
+        foreach (var item in IslandHelper.RouteItems)
         {
-            if (item.Value.IgnoreNode)
-                continue;
+            // IgnoreNode only affects loop count calculations, not sell eligibility.
+            // Items like Islewort that appear in multi-item nodes should still be
+            // sold when they exceed the keep limit.
             if (ItemData.AlwaysIgnoreSell.Contains(item.Value.ItemId))
                 continue;
 
-            string itemName = item.Key;
-            int gatherAmount = IslandHelper.RouteItems[itemName].Amount;
-            int itemId = item.Value.ItemId;
+            var itemName = item.Key;
+            var gatherAmount = IslandHelper.RouteItems[itemName].Amount;
+            var itemId = item.Value.ItemId;
 
-            int ItemSell = IslandHelper.SellAmount(LoopCount, gatherAmount, itemId);
+            var ItemSell = IslandHelper.SellAmount(LoopCount, gatherAmount, itemId);
             if (ItemSell > 0)
             {
                 IslandHelper.SellItems.Add(itemId, ItemSell);

@@ -7,7 +7,7 @@ internal class MJIShopUi
 {
     public static void Draw()
     {
-        if (TryGetAddonMaster<MJIDisposeShop>("MJIDisposeShop", out MJIDisposeShop mjishop) && mjishop.IsAddonReady)
+        if (TryGetAddonMaster("MJIDisposeShop", out MJIDisposeShop mjishop) && mjishop.IsAddonReady)
         {
             if (ImGui.BeginTable("MJI Shop Item Demo", 6, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
             {
@@ -20,14 +20,14 @@ internal class MJIShopUi
 
                 ImGui.TableHeadersRow();
 
-                for(int i = 0; i < mjishop.NumEntries; i++)
+                for (var i = 0; i < mjishop.NumEntries; i++)
                 {
-                    MJIDisposeShop.ExportShopInfo entry = mjishop.ExportItems[i];
-                    string itemName = entry.ItemName;
-                    uint Value = entry.Value;
-                    uint InventoryAmount = entry.Inventory;
-                    uint allocatedAmount = entry.Allocated;
-                    int itemId = OnPluginLoad.IslandItemInfo.Where(x => x.Value == itemName).FirstOrDefault().Key;
+                    var entry = mjishop.ExportItems[i];
+                    var itemName = entry.ItemName;
+                    var Value = entry.Value;
+                    var InventoryAmount = entry.Inventory;
+                    var allocatedAmount = entry.Allocated;
+                    var itemId = OnPluginLoad.IslandItemInfo.Where(x => x.Value == itemName).FirstOrDefault().Key;
 
                     ImGui.TableNextRow();
                     ImGui.PushID(itemName);

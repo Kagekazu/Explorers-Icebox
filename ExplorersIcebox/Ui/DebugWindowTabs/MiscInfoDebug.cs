@@ -1,6 +1,5 @@
 using ExplorersIcebox.Scheduler.Tasks;
 using ExplorersIcebox.Util;
-using System.Collections.Generic;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 
 namespace ExplorersIcebox.Ui.DebugWindowTabs;
@@ -41,7 +40,7 @@ internal class MiscInfoDebug
             Task_UpdateShop.Enqueue();
         }
 
-        if (TryGetAddonMaster<MJIHud>("MJIHud", out MJIHud hud) && hud.IsAddonReady)
+        if (TryGetAddonMaster("MJIHud", out MJIHud hud) && hud.IsAddonReady)
         {
             if (ImGui.Button("Open IsleInventory"))
             {
@@ -98,7 +97,7 @@ internal class MiscInfoDebug
 
             ImGui.TableHeadersRow();
 
-            foreach(KeyValuePair<int, ItemData.IslandItemInfo> item in ItemData.IslandItems)
+            foreach (var item in ItemData.IslandItems)
             {
                 ImGui.TableNextRow();
 

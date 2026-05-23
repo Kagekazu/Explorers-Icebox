@@ -1,11 +1,10 @@
-using Dalamud.Game.ClientState.Objects.Types;
 namespace ExplorersIcebox.Ui.DebugWindowTabs;
 
 internal class TargetInfoDebug
 {
     public static void Draw()
     {
-        IGameObject? target = Svc.Targets?.Target;
+        var target = Svc.Targets?.Target;
 
         if (target != null)
         {

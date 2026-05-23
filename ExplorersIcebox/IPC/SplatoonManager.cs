@@ -23,7 +23,7 @@ public class SplatoonManager
 
     private static unsafe void ResetOnFrameChange()
     {
-        uint frame = Framework.Instance()->FrameCounter;
+        var frame = Framework.Instance()->FrameCounter;
         if (frame != Frame)
         {
             Frame = frame;
@@ -37,11 +37,11 @@ public class SplatoonManager
         Vector3? prev = null;
         if (path != null && path.Count > 0)
         {
-            for(int i = 0; i < path.Count; i++)
+            for (var i = 0; i < path.Count; i++)
             {
-                Element point = GetNextPoint(addNumbers ? (i + 1).ToString() : "");
+                var point = GetNextPoint(addNumbers ? (i + 1).ToString() : "");
                 point.SetRefCoord(path[i]);
-                Element line = GetNextLine();
+                var line = GetNextLine();
                 line.SetRefCoord(path[i]);
                 if (Player.Object != null)
                     line.SetOffCoord(prev ?? Player.Object.Position);

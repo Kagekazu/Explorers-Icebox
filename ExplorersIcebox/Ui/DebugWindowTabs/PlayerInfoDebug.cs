@@ -1,4 +1,3 @@
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Interface.Colors;
 using ExplorersIcebox.Scheduler.Tasks;
 using ExplorersIcebox.Util;
@@ -26,7 +25,7 @@ internal class PlayerInfoDebug
             FontAwesome.Print(ImGuiColors.DalamudRed, FontAwesome.Cross);
         }
         ImGui.Text($"Navmesh information");
-        IPlayerCharacter? player = Svc.Objects.LocalPlayer;
+        var player = Svc.Objects.LocalPlayer;
         if (player != null)
         {
             ImGui.Text("PlayerPos: " + player.Position);

@@ -18,7 +18,7 @@ internal static class Task_GatherMode
     {
         if (MJIManager.Instance()->CurrentMode == 1) // Gather Mode
             return true;
-        if (TryGetAddonByName<AtkUnitBase>("ContextIconMenu", out AtkUnitBase* ContextAddon) && IsAddonReady(ContextAddon))
+        if (TryGetAddonByName("ContextIconMenu", out AtkUnitBase* ContextAddon) && IsAddonReady(ContextAddon))
         {
             if (EzThrottler.Throttle("Throttling the ContextIconMenu Callback to not Crash"))
             {
@@ -26,7 +26,7 @@ internal static class Task_GatherMode
                 Callback.Fire(ContextAddon, true, -1);
             }
         }
-        else if (TryGetAddonByName<AtkUnitBase>("MJIHud", out AtkUnitBase* MJIAddon) && IsAddonReady(MJIAddon))
+        else if (TryGetAddonByName("MJIHud", out AtkUnitBase* MJIAddon) && IsAddonReady(MJIAddon))
         {
             if (EzThrottler.Throttle("Throttling opening the island mode"))
             {
