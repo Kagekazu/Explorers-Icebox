@@ -25,34 +25,13 @@ internal static class Task_GatherLoop
         P.taskManager.Enqueue(() => CheckLoopCount(), "Checking loop count");
     }
 
-    internal static bool? LoopCountUpdate(int currentLoops)
-    {
-        Svc.Log.Debug($"Maximum loop count: {IslandHelper.GoalLoopAmount}");
-        Svc.Log.Debug($"Minimum Possible Loops: {IslandHelper.MaxRouteLoops}");
-        Svc.Log.Debug($"Current loop count: {currentLoops}");
-        var totalLoops = Math.Min(IslandHelper.GoalLoopAmount, IslandHelper.MaxRouteLoops) - currentLoops;
-        Svc.Log.Debug($"Total loops expected: {totalLoops}");
-
-        return true;
-    }
-
     internal static bool? CheckLoopCount()
     {
-        Svc.Log.Debug($"Current loop count: {IslandHelper.LoopCounter}");
-        Svc.Log.Debug($"Max total loops: {IslandHelper.GoalLoopAmount}");
-        var RepeatAmount = C.RunAmount;
         IslandHelper.LoopCounter += 1;
-        if (C.RunMultiple && IslandHelper.LoopCounter < RepeatAmount)
-        {
-            Svc.Log.Debug($"Run multiple loops were enabled. \n" +
-                          $"Current Loop: {IslandHelper.LoopCounter} \n" +
-                          $"Repeat Amount: {RepeatAmount}");
+        if (C.RunMultiple && IslandHelper.LoopCounter < C.RunAmount)
             SchedulerMain.State = IceBoxState.Start;
-        }
         else
-        {
             SchedulerMain.State = IceBoxState.EndProcess;
-        }
 
         return true;
     }

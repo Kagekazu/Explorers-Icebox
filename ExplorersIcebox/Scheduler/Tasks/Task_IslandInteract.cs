@@ -2,7 +2,6 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.Throttlers;
 using ExplorersIcebox.Util;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using System.Collections.Generic;
 namespace ExplorersIcebox.Scheduler.Tasks;
 
@@ -10,125 +9,40 @@ internal static class Task_IslandInteract
 {
     public static void Enqueue(List<Vector3> List, ulong gameObjectId, bool mount = false, bool fly = false)
     {
-        P.taskManager.Enqueue(() => QueueNavmesh2(List, mount, fly), "Queueing Navmesh");
-        P.taskManager.Enqueue(() => FinishRoute(mount), "Waiting for Navmesh to Finish", Utils.TaskConfig);
+        P.taskManager.Enqueue(() => MoveToWaypoints(List, mount, fly), "Queueing Navmesh");
+        P.taskManager.Enqueue(() => WaitForNavmesh(), "Waiting for Navmesh to Finish", Utils.TaskConfig);
         if (gameObjectId != 0)
         {
-            P.taskManager.Enqueue(() => TargetV2(gameObjectId), $"Checking for target: {gameObjectId}"); // Checking to see if the target exist
+            P.taskManager.Enqueue(() => TargetV2(gameObjectId), $"Checking for target: {gameObjectId}");
             P.taskManager.Enqueue(() => GatherInteract(gameObjectId), $"If target exist, gathering {gameObjectId}");
         }
     }
 
-    internal static unsafe bool? QueueNavmesh2(List<Vector3> List, bool mount, bool fly)
+    internal static bool? MoveToWaypoints(List<Vector3> waypoints, bool mount, bool fly)
     {
-        var PlayerMounted = Svc.Condition[ConditionFlag.Mounted]; // Quick and easy way to just access if you are mounted quickly
-        var count = List.Count - 1;
-
-        if (P.navmesh.IsRunning() && ((PlayerMounted && mount) || !mount))
-        {
+        if (PlayerHelper.GetDistanceToPlayer(waypoints[^1]) < 0.5f)
             return true;
-        }
-        if (PlayerHelper.GetDistanceToPlayer(List[count]) < 0.5) // on the off chance that you're RIGHT there... there's no need to move to it
-        {
-            return true;
-        }
-        if (EzThrottler.Throttle("Verbose Log Info"))
-        {
-            Svc.Log.Info($"Navmesh Running: {P.navmesh.IsRunning()}\n" +
-                         $"&& ( (Player Mounted: {PlayerMounted} && Mount: {mount}) || No Mount: {!mount} )");
-        }
-        // All conditions are failed, checking to see if you need to fly or if you just need to mount
 
-        if (fly) // Checking if you aim to fly to said point
-        {
-            if (!PlayerMounted) // Player not mounted, need to do this before flying can be achieved
-            {
-                if (!Svc.Condition[ConditionFlag.Casting] && !Svc.Condition[ConditionFlag.MountOrOrnamentTransition])
-                {
-                    if (EzThrottler.Throttle("Using Mount Action Roulette"))
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.GeneralAction, 9);
-                    }
-                }
-            }
-            else // Player is on a mount, initiating the flying moveto
-            {
-                if (EzThrottler.Throttle("MoveToQueue_FlyMode"))
-                    P.navmesh.MoveTo(new(List), fly);
-            }
-        }
-        else
-        {
-            // Checking to see if you need to mount
-            if (!PlayerMounted && mount)
-            {
-                if (!Svc.Condition[ConditionFlag.Casting] && !Svc.Condition[ConditionFlag.MountOrOrnamentTransition])
-                {
-                    if (EzThrottler.Throttle("Using Mount", 250))
-                    {
-                        Svc.Log.Debug("Using Mount Action");
-                        ActionManager.Instance()->UseAction(ActionType.GeneralAction, 9);
-                    }
-                }
-            }
-            if (!mount)
-            {
-                if (EzThrottler.Throttle("Using sprint"))
-                    ActionManager.Instance()->UseAction(ActionType.GeneralAction, 26);
-            }
-            if (EzThrottler.Throttle($"MoveToQueue_Ground_{List[0]}"))
-            {
-                Svc.Log.Debug("Telling Navmesh to move through the list");
-                P.navmesh.MoveTo(new(List), fly);
-            }
-        }
+        if (MovementHelper.TryStartNavmesh(waypoints, mount, fly))
+            return true;
 
         return false;
     }
 
-    internal static bool? FinishRoute(bool mount)
+    internal static bool? WaitForNavmesh()
     {
-        // pretty much a failsafe to make sure that navmesh isn't running. 
-        // could clump with other code but, could also use this as a series of wp's for specific things
-        // like jumping in the future...
-
-        if (!P.navmesh.IsRunning())
-        {
-            return true;
-        }
-
-        return false;
+        return !P.navmesh.IsRunning() ? true : false;
     }
 
     internal static bool? TargetV2(ulong gameObjectId)
     {
-        IGameObject? gameObject = null;
-        var currentTarget = Svc.Targets.Target?.GameObjectId ?? 0;
-        Utils.TryGetObjectByGameObjectId(gameObjectId, out gameObject);
-
-#if DEBUG
-        Svc.Log.Debug($"GameObject == Null? [GameObject Doesn't exist]: {gameObject == null}");
-        if (gameObject != null)
-        {
-            Svc.Log.Debug($"Gameobject is current target: {gameObject.IsTarget()}");
-            Svc.Log.Debug($"GameObject is targetable: {gameObject.IsTargetable}");
-        }
-#endif
+        Utils.TryGetObjectByGameObjectId(gameObjectId, out var gameObject);
 
         if (gameObject == null || gameObject.IsTarget() || !gameObject.IsTargetable)
-        {
             return true;
-        }
-        if (gameObject != null)
-        {
-            if (EzThrottler.Throttle($"Targeting: {gameObjectId}"))
-            {
-#if DEBUG
-                Svc.Log.Debug($"Targeting: {gameObject.Name}");
-#endif
-                Utils.TargetgameObject(gameObject);
-            }
-        }
+
+        if (EzThrottler.Throttle($"Targeting: {gameObjectId}"))
+            Utils.TargetgameObject(gameObject);
 
         return false;
     }

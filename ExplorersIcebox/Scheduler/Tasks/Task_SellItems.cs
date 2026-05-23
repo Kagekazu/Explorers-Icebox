@@ -76,39 +76,18 @@ internal static class Task_SellItems
         return false;
     }
 
-    internal static bool? TargetV2(ulong dataId)
-    {
-        IGameObject? gameObject = null;
-        var currentTarget = Svc.Targets.Target?.GameObjectId ?? 0;
-        Utils.TryGetObjectByDataId(dataId, out gameObject);
+        internal static bool? TargetV2(ulong dataId)
+        {
+            Utils.TryGetObjectByDataId(dataId, out var gameObject);
 
-#if DEBUG
-        Svc.Log.Debug($"GameObject == Null? [GameObject Doesn't exist]: {gameObject == null}");
-        if (gameObject != null)
-        {
-            Svc.Log.Debug($"Gameobject is current target: {gameObject.IsTarget()}");
-            Svc.Log.Debug($"GameObject is targetable: {gameObject.IsTargetable}");
-        }
-#endif
+            if (gameObject == null || gameObject.IsTarget() || !gameObject.IsTargetable)
+                return true;
 
-        if (gameObject == null || gameObject.IsTarget() || !gameObject.IsTargetable)
-        {
-            return true;
-        }
-        if (gameObject != null)
-        {
             if (EzThrottler.Throttle($"Targeting: {dataId}"))
-            {
-#if DEBUG
-                Svc.Log.Debug($"Targeting: {gameObject.Name}");
-#endif
                 Utils.TargetgameObject(gameObject);
-            }
+
+            return false;
         }
-
-        return false;
-    }
-
     internal static bool? SellToNpcV2()
     {
         foreach (var item in IslandHelper.SellItems)

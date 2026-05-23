@@ -44,28 +44,17 @@ internal static class Task_SellCheck
 
         if (C.SkipSell || !SellToShop)
         {
-            Svc.Log.Debug($"Skip Sell Enabled? {C.SkipSell}");
-            Svc.Log.Debug($"Sell to Shop? {SellToShop}");
-            Svc.Log.Debug("Changing state to run route");
             SchedulerMain.State = IceBoxState.RunRoute;
         }
         else if (SellToShop)
         {
-            Svc.Log.Debug("Items were found to be sold, swapping to NPC Sell");
+            Task_UpdateShop.Enqueue();
             SchedulerMain.State = IceBoxState.SellToNpc;
-        }
-        else if (C.DryTest)
-        {
-            Svc.Log.Debug("Dry test was enabled, switching back to idle mode");
-            SchedulerMain.State = IceBoxState.Idle;
         }
         else
         {
-            Svc.Log.Debug("this shouldn't of happen. Swapping to idle");
             SchedulerMain.State = IceBoxState.Idle;
         }
-
-        Svc.Log.Information($"Sell check is complete. State is: {SchedulerMain.State}");
         return true;
     }
 }

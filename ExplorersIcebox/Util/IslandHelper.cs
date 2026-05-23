@@ -160,7 +160,7 @@ public static class IslandHelper
         var callback = 0;
         foreach (var item in ItemData.IslandItems)
         {
-            if (Utils.IsNodeVisible("MJIPouch", 1, 8, item.Value.NodeId, 2))
+            if (AddonHelper.IsNodeVisible("MJIPouch", 1, 8, item.Value.NodeId, 2))
             {
                 item.Value.SellSlot = callback;
                 callback += 1;

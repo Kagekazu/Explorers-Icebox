@@ -12,8 +12,7 @@ public class PlayerHelper
 
     public static bool IsPlayerNotBusy() =>
         Player.Available
-        && Player.Object != null
-        && Player.Object.CastActionId == 0
+        && Player.Object!.CastActionId == 0
         && !IsOccupied()
         && !Player.IsJumping
         && Player.Object.IsTargetable
@@ -22,23 +21,11 @@ public class PlayerHelper
     public static unsafe float GetDistanceToPlayer(Vector3 v3) => Vector3.Distance(v3, Player.GameObject->Position);
     public static float GetDistanceToPlayer(IGameObject gameObject) => GetDistanceToPlayer(gameObject.Position);
 
-    public static unsafe bool GetItemCount(int itemID, out int count, bool includeHq = true, bool includeNq = true)
+    public static unsafe bool GetItemCount(int itemID, out int count)
     {
-        try
-        {
-            itemID = itemID >= 1_000_000 ? itemID - 1_000_000 : itemID;
-            count = 0;
-            if (includeHq)
-                count += InventoryManager.Instance()->GetInventoryItemCount((uint)itemID, true);
-            if (includeNq)
-                count += InventoryManager.Instance()->GetInventoryItemCount((uint)itemID);
-            count += InventoryManager.Instance()->GetInventoryItemCount((uint)itemID + 500_000);
-            return true;
-        }
-        catch
-        {
-            count = 0;
-            return false;
-        }
+        var im = InventoryManager.Instance();
+        count = im->GetInventoryItemCount((uint)itemID)
+              + im->GetInventoryItemCount((uint)itemID + 500_000);
+        return true;
     }
 }

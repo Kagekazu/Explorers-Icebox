@@ -20,7 +20,9 @@ internal class RouteEditorV4Debug
 
     private static string RenamePopupInput = "";
     private static string RenamePopupOldName = "";
+    #pragma warning disable CS0414
     private static bool RenamePopupOpen;
+    #pragma warning restore CS0414
     private static Dictionary<string, ItemGathered> RouteItems = new();
     private static List<string> routeNames => G.Routes.Keys
                                                .OrderByDescending(name => ExtractNumber(name))

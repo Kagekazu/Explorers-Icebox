@@ -25,26 +25,19 @@ public static class AddonHelper
     public static unsafe string GetNodeText(string addonName, params int[] nodeNumbers)
     {
         var ptr = Svc.GameGui.GetAddonByName(addonName);
+        if (ptr == nint.Zero)
+            return string.Empty;
 
         var addon = (AtkUnitBase*)ptr.Address;
         var uld = addon->UldManager;
 
         AtkResNode* node = null;
-        var debugString = string.Empty;
         for (var i = 0; i < nodeNumbers.Length; i++)
         {
-            var nodeNumber = nodeNumbers[i];
+            node = uld.NodeList[nodeNumbers[i]];
 
-            var count = uld.NodeListCount;
-
-            node = uld.NodeList[nodeNumber];
-            debugString += $"[{nodeNumber}]";
-
-            // More nodes to traverse
             if (i < nodeNumbers.Length - 1)
-            {
                 uld = ((AtkComponentNode*)node)->Component->UldManager;
-            }
         }
 
         if (node->Type == NodeType.Counter)
@@ -56,26 +49,19 @@ public static class AddonHelper
     public static unsafe AtkTextNode* GetAtkTextNode(string addonName, params int[] nodeNumbers)
     {
         var ptr = Svc.GameGui.GetAddonByName(addonName);
+        if (ptr == nint.Zero)
+            return null;
 
         var addon = (AtkUnitBase*)ptr.Address;
         var uld = addon->UldManager;
 
         AtkResNode* node = null;
-        var debugString = string.Empty;
         for (var i = 0; i < nodeNumbers.Length; i++)
         {
-            var nodeNumber = nodeNumbers[i];
+            node = uld.NodeList[nodeNumbers[i]];
 
-            var count = uld.NodeListCount;
-
-            node = uld.NodeList[nodeNumber];
-            debugString += $"[{nodeNumber}]";
-
-            // More nodes to traverse
             if (i < nodeNumbers.Length - 1)
-            {
                 uld = ((AtkComponentNode*)node)->Component->UldManager;
-            }
         }
 
         var textNode = (AtkTextNode*)node;

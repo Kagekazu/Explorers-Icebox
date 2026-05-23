@@ -27,10 +27,10 @@ public static class OnPluginLoad
 
     public static void UpdateItemNames()
     {
+        var sheet = Svc.Data.GetExcelSheet<Item>();
         foreach (var itemId in ItemIds)
         {
-            var itemName = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == itemId).FirstOrDefault().Name.ToString();
-            IslandItemInfo[itemId] = itemName;
+            IslandItemInfo[itemId] = sheet.GetRow((uint)itemId).Name.ToString();
         }
     }
 }

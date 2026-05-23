@@ -34,7 +34,6 @@ internal static class SchedulerMain
                     break;
                 case CheckSell:
                     Task_SellCheck.Enqueue();
-                    Task_UpdateShop.Enqueue();
                     break;
                 case SellToNpc:
                     Svc.Log.Information("NPC Sell State Active");
