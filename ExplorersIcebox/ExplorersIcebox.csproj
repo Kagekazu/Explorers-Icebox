@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/14.0.0">
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
 
   <PropertyGroup>
     <Version>1.0.4.7</Version>
@@ -18,11 +18,8 @@
 
     <ItemGroup>
         <PackageReference Include="YamlDotNet" Version="16.3.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
-        <ProjectReference Include="..\ffxiv_pictomancy\Pictomancy\Pictomancy.csproj" />
+        <PackageReference Include="ECommons" Version="3.2.0.19" />
+        <PackageReference Include="Pictomancy" Version="1.0.9" />
     </ItemGroup>
 
     <ItemGroup>

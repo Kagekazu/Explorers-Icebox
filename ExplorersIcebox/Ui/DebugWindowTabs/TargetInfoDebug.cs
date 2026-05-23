@@ -22,9 +22,9 @@ namespace ExplorersIcebox.Ui.DebugWindowTabs
                 {
                     ImGui.SetClipboardText($"{target.GameObjectId}");
                 }
-                if (ImGui.Button($"Data ID: {target.DataId}"))
+                if (ImGui.Button($"Data ID: {target.BaseId}"))
                 {
-                    ImGui.SetClipboardText($"{target.DataId}");
+                    ImGui.SetClipboardText($"{target.BaseId}");
                 }
             }
         }

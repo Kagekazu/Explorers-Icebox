@@ -91,9 +91,9 @@ namespace ExplorersIcebox.Ui.DebugWindowTabs
                         ImGui.Text($"{obj.Name.ToString()}");
 
                         ImGui.TableNextColumn();
-                        if (ImGui.Selectable($"{obj.DataId}###{obj.Name.ToString()}"))
+                        if (ImGui.Selectable($"{obj.BaseId}###{obj.Name.ToString()}"))
                         {
-                            ImGui.SetClipboardText($"{obj.DataId}");
+                            ImGui.SetClipboardText($"{obj.BaseId}");
                         }
 
                         ImGui.TableNextColumn();

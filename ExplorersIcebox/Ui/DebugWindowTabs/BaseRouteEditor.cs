@@ -17,9 +17,9 @@ namespace ExplorersIcebox.Ui.DebugWindowTabs
     {
         private static string NewRouteName = "";
         private static bool RouteWP = false;
-        private static bool PathWP = false;
-        private static bool ShowTargets = false;
-        private static bool ShowTargetsName = false;
+        private static bool PathWP;
+        private static bool ShowTargets;
+        private static bool ShowTargetsName;
 
         private static int SelectedRouteIndex = 0;
         private static List<string> BaseRouteNames => G.BaseRoutes.Keys.ToList();
@@ -154,7 +154,7 @@ namespace ExplorersIcebox.Ui.DebugWindowTabs
 
                                 if (ShowTargets && routeSelected.Value.TargetId != 0)
                                 {
-                                    IGameObject? target = Svc.Objects.Where(x => x.DataId == routeSelected.Value.TargetId).FirstOrDefault();
+                                    IGameObject? target = Svc.Objects.Where(x => x.BaseId == routeSelected.Value.TargetId).FirstOrDefault();
 
                                     if (target != null)
                                     {
@@ -178,7 +178,7 @@ namespace ExplorersIcebox.Ui.DebugWindowTabs
                     if (Svc.Objects.LocalPlayer != null)
                         playerPos = Svc.Objects.LocalPlayer.Position;
                     if (Svc.Targets.Target != null)
-                        targetId = Svc.Targets.Target.DataId;
+                        targetId = Svc.Targets.Target.BaseId;
 
                     ImGui.AlignTextToFramePadding();    
                     ImGui.Text($"Target DatId: {routeSelected.Value.TargetId}");

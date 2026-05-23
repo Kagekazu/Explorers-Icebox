@@ -43,7 +43,8 @@ public class SplatoonManager
                 point.SetRefCoord(path[i]);
                 var line = GetNextLine();
                 line.SetRefCoord(path[i]);
-                line.SetOffCoord(prev ?? Player.Object.Position);
+                if (Player.Object != null)
+                    line.SetOffCoord(prev ?? Player.Object.Position);
                 line.color = (prev != null ? ImGuiColors.DalamudYellow : ImGuiColors.HealerGreen).ToUint();
                 Splatoon.DisplayOnce(point);
                 if (prev != null || addPlayer)

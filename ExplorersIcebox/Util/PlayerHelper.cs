@@ -20,6 +20,7 @@ public class PlayerHelper
     public static bool IsPlayerNotBusy()
     {
         return Player.Available
+               && Player.Object != null
                && Player.Object.CastActionId == 0
                && !GenericHelpers.IsOccupied()
                && !Player.IsJumping
