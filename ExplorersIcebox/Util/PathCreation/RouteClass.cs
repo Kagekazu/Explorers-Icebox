@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using YamlDotNet.Serialization;
-
 namespace ExplorersIcebox.Util.PathCreation;
 
 public static class RouteClass

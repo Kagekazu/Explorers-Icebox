@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-
 namespace ExplorersIcebox.Config;
 
 public class GeneralConfig : IYamlConfig
@@ -16,11 +15,11 @@ public class GeneralConfig : IYamlConfig
     public bool RunMaxLoops { get; set; } = false;
     public bool RunMultiple { get; set; } = false;
     /// <summary>
-    /// Amount of times you want to run this route
+    ///     Amount of times you want to run this route
     /// </summary>
     public int RunAmount { get; set; } = 0;
 
-    public Dictionary<string, int> ItemGatherAmount { get; set; } = new ()
+    public Dictionary<string, int> ItemGatherAmount { get; set; } = new()
     {
         { "Palm Leaf", 0 },
         { "Apple", 0 },
@@ -66,10 +65,10 @@ public class GeneralConfig : IYamlConfig
         { "Gold Ore", 0 },
         { "Hawk's Eye Sand", 0 },
         { "Crystal Formation", 0 },
-        { "Cabbage Seed", 0},
-        { "Pumpkin Seed", 0},
-        { "Parsnip Seed", 0},
-        { "Popoto Seed", 0}
+        { "Cabbage Seed", 0 },
+        { "Pumpkin Seed", 0 },
+        { "Parsnip Seed", 0 },
+        { "Popoto Seed", 0 }
     };
 
     // Debug Stuff
@@ -79,8 +78,8 @@ public class GeneralConfig : IYamlConfig
     public uint PictoTextCol { get; set; } = 0;
     public float DotRadius { get; set; } = 0f;
     public float LineWidth { get; set; } = 0f;
-    public Vector2 DonutRadius { get; set; } = new Vector2(0.7f, 1.4f);
-    public Vector2 FanPosition { get; set; } = new Vector2(0.0f, 6.283f);
+    public Vector2 DonutRadius { get; set; } = new(0.7f, 1.4f);
+    public Vector2 FanPosition { get; set; } = new(0.0f, 6.283f);
     public float TextFloatPlus { get; set; } = 0.0f;
 
     // General Save

@@ -1,11 +1,6 @@
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ExplorersIcebox.Util;
 
 public static class AddonHelper
@@ -18,7 +13,7 @@ public static class AddonHelper
 
     public static unsafe bool IsNodeVisible(string addonName, params int[] ids)
     {
-        var ptr = Svc.GameGui.GetAddonByName(addonName, 1);
+        var ptr = Svc.GameGui.GetAddonByName(addonName);
         if (ptr == nint.Zero)
             return false;
 
@@ -29,28 +24,20 @@ public static class AddonHelper
 
     public static unsafe string GetNodeText(string addonName, params int[] nodeNumbers)
     {
-
-        var ptr = Svc.GameGui.GetAddonByName(addonName, 1);
+        var ptr = Svc.GameGui.GetAddonByName(addonName);
+        if (ptr == nint.Zero)
+            return string.Empty;
 
         var addon = (AtkUnitBase*)ptr.Address;
         var uld = addon->UldManager;
 
         AtkResNode* node = null;
-        var debugString = string.Empty;
         for (var i = 0; i < nodeNumbers.Length; i++)
         {
-            var nodeNumber = nodeNumbers[i];
+            node = uld.NodeList[nodeNumbers[i]];
 
-            var count = uld.NodeListCount;
-
-            node = uld.NodeList[nodeNumber];
-            debugString += $"[{nodeNumber}]";
-
-            // More nodes to traverse
             if (i < nodeNumbers.Length - 1)
-            {
                 uld = ((AtkComponentNode*)node)->Component->UldManager;
-            }
         }
 
         if (node->Type == NodeType.Counter)
@@ -61,28 +48,20 @@ public static class AddonHelper
     }
     public static unsafe AtkTextNode* GetAtkTextNode(string addonName, params int[] nodeNumbers)
     {
-
-        var ptr = Svc.GameGui.GetAddonByName(addonName, 1);
+        var ptr = Svc.GameGui.GetAddonByName(addonName);
+        if (ptr == nint.Zero)
+            return null;
 
         var addon = (AtkUnitBase*)ptr.Address;
         var uld = addon->UldManager;
 
         AtkResNode* node = null;
-        var debugString = string.Empty;
         for (var i = 0; i < nodeNumbers.Length; i++)
         {
-            var nodeNumber = nodeNumbers[i];
+            node = uld.NodeList[nodeNumbers[i]];
 
-            var count = uld.NodeListCount;
-
-            node = uld.NodeList[nodeNumber];
-            debugString += $"[{nodeNumber}]";
-
-            // More nodes to traverse
             if (i < nodeNumbers.Length - 1)
-            {
                 uld = ((AtkComponentNode*)node)->Component->UldManager;
-            }
         }
 
         var textNode = (AtkTextNode*)node;
@@ -99,7 +78,7 @@ public static class AddonHelper
             if (ids.Length == 1)
                 return node;
 
-            var newList = new List<int>(ids);
+            List<int> newList = new(ids);
             newList.RemoveAt(0);
 
             var childNode = node->ChildNode;

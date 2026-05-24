@@ -1,49 +1,47 @@
 using Dalamud.Interface.Utility.Raii;
 using ExplorersIcebox.Scheduler;
-using ExplorersIcebox.Scheduler.Tasks;
 using ExplorersIcebox.Util;
 using System.Collections.Generic;
-
+using System.Text.RegularExpressions;
 namespace ExplorersIcebox.Ui.MainWindow;
 
 internal class MainWindow : Window
 {
+    private readonly List<string> modeSelect = ["Ground XP", "Flying XP", "Material Grind"];
+    private int selectedModeIndex = C.ModeSelected;
+
+    public int selectedRoute = C.routeSelected;
     public MainWindow() :
         base($"Explorer's Icebox {P.GetType().Assembly.GetName().Version} ###Explorer'sIceboxMainWindow")
     {
         Flags = ImGuiWindowFlags.None;
         SizeConstraints = new()
         {
-            MinimumSize = new Vector2(300, 300),
-            MaximumSize = new Vector2(2000, 2000)
+            MinimumSize = new(300, 300),
+            MaximumSize = new(2000, 2000)
         };
         P.windowSystem.AddWindow(this);
         AllowPinning = false;
     }
+    private List<string> routeNames => EmbedRoutes.Routes.Keys.OrderBy(name => ExtractNumber(name)).ToList();
 
     public void Dispose() { }
 
     private static int ExtractNumber(string input)
     {
         // Use regex to find digits in the string
-        var match = System.Text.RegularExpressions.Regex.Match(input, @"\d+");
+        var match = Regex.Match(input, @"\d+");
         return match.Success ? int.Parse(match.Value) : int.MinValue; // or 0 if you prefer
     }
-
-    public int selectedRoute = C.routeSelected;
-
-    private readonly List<string> modeSelect = ["Ground XP", "Flying XP", "Material Grind"];
-    private int selectedModeIndex = C.ModeSelected;
-    private List<string> routeNames => EmbedRoutes.Routes.Keys.OrderBy(name => ExtractNumber(name)).ToList();
 
     public override void Draw()
     {
         ImGui.SetNextItemWidth(200);
         if (ImGui.BeginCombo("Select Mode", modeSelect[selectedModeIndex]))
         {
-            for (int i = 0; i < modeSelect.Count; i++)
+            for (var i = 0; i < modeSelect.Count; i++)
             {
-                bool isSelected = (i == selectedModeIndex);
+                var isSelected = (i == selectedModeIndex);
                 if (ImGui.Selectable(modeSelect[i], isSelected))
                 {
                     C.ModeSelected = i;
@@ -60,9 +58,9 @@ internal class MainWindow : Window
             ImGui.EndCombo();
         }
 
-        bool DisableSelection = selectedModeIndex < modeSelect.Count - 1;
+        var DisableSelection = selectedModeIndex < modeSelect.Count - 1;
 
-        int selectedRouteIndex = C.routeSelected;
+        var selectedRouteIndex = C.routeSelected;
 
         if (selectedModeIndex == 2)
         {
@@ -71,9 +69,9 @@ internal class MainWindow : Window
                 ImGui.SetNextItemWidth(200);
                 if (ImGui.BeginCombo("Select Route", routeNames[selectedRouteIndex]))
                 {
-                    for (int i = 0; i < routeNames.Count; i++)
+                    for (var i = 0; i < routeNames.Count; i++)
                     {
-                        bool isSelected = (i == selectedRouteIndex);
+                        var isSelected = (i == selectedRouteIndex);
                         if (ImGui.Selectable(routeNames[i], isSelected))
                         {
                             selectedRouteIndex = i;
@@ -114,10 +112,10 @@ internal class MainWindow : Window
                     {
                         foreach (var item in Node.ItemIds)
                         {
-                            string itemName = ItemData.IslandItems[item].ItemName;
+                            var itemName = ItemData.IslandItems[item].ItemName;
                             if (!routeItems.ContainsKey(itemName))
                             {
-                                routeItems[itemName] = new IslandHelper.ItemGathered()
+                                routeItems[itemName] = new()
                                 {
                                     Amount = 1,
                                     ItemId = item,
@@ -157,14 +155,14 @@ internal class MainWindow : Window
                 }
             }
 
-            bool SkipSell = C.SkipSell;
+            var SkipSell = C.SkipSell;
             if (ImGui.Checkbox("Skip Selling Items", ref SkipSell))
             {
                 C.SkipSell = SkipSell;
                 C.Save();
             }
 
-            bool RunMaxLoops = C.RunMaxLoops;
+            var RunMaxLoops = C.RunMaxLoops;
             if (ImGui.Checkbox("Run Maximum Loops", ref RunMaxLoops))
             {
                 C.RunMaxLoops = RunMaxLoops;
@@ -175,7 +173,7 @@ internal class MainWindow : Window
             if (RunMaxLoops)
                 IslandHelper.GoalLoopAmount = IslandHelper.MaxRouteLoops;
 
-            bool runMultiple = C.RunMultiple;
+            var runMultiple = C.RunMultiple;
             if (ImGui.Checkbox("Repeat Loop", ref runMultiple))
             {
                 C.RunMultiple = runMultiple;
@@ -184,7 +182,7 @@ internal class MainWindow : Window
             if (runMultiple)
             {
                 ImGui.SameLine();
-                int RunAmount = C.RunAmount;
+                var RunAmount = C.RunAmount;
                 ImGui.SetNextItemWidth(100);
                 if (ImGui.InputInt("###RunMultipleAmount", ref RunAmount))
                 {
@@ -195,7 +193,7 @@ internal class MainWindow : Window
                 ImGui.Text("Amount of times");
             }
 
-            int MinItemKeep = C.MinimumItemKeep;
+            var MinItemKeep = C.MinimumItemKeep;
 
             using (ImRaii.Disabled(SkipSell))
             {
@@ -206,7 +204,7 @@ internal class MainWindow : Window
                     C.Save();
                 }
             }
-            bool DisableButtons = IslandHelper.GoalLoopAmount > IslandHelper.MaxRouteLoops || IslandHelper.MaxRouteLoops == 0 || IslandHelper.GoalLoopAmount == 0;
+            var DisableButtons = IslandHelper.GoalLoopAmount > IslandHelper.MaxRouteLoops || IslandHelper.MaxRouteLoops == 0 || IslandHelper.GoalLoopAmount == 0;
 
             using (ImRaii.Disabled(DisableButtons))
             {
@@ -227,7 +225,7 @@ internal class MainWindow : Window
                 ImGui.SameLine();
                 ImGui.AlignTextToFramePadding();
                 ImGuiEx.IconWithTooltip(FontAwesomeIcon.ExclamationTriangle, "The current setup is not possible without causing issues. \n" +
-                    "Please adjust either how many items to keep, or how many you want to gather. ");
+                                                                             "Please adjust either how many items to keep, or how many you want to gather. ");
                 ImGui.Spacing();
             }
 
@@ -298,7 +296,6 @@ internal class MainWindow : Window
                     ImGui.TableNextColumn();
                     if (PlayerHelper.GetItemCount(item.Value.ItemId, out var count))
                         ImGui.Text($"{count}");
-
                 }
 
                 ImGui.EndTable();

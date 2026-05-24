@@ -3,11 +3,11 @@ using ECommons.GameHelpers;
 using ECommons.SplatoonAPI;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using System.Collections.Generic;
-
 namespace ExplorersIcebox.IPC;
+
 public class SplatoonManager
 {
-    private static ulong Frame = 0;
+    private static ulong Frame;
     private static SplatoonCache Cache = new();
 
     public SplatoonManager()
@@ -43,7 +43,8 @@ public class SplatoonManager
                 point.SetRefCoord(path[i]);
                 var line = GetNextLine();
                 line.SetRefCoord(path[i]);
-                line.SetOffCoord(prev ?? Player.Object.Position);
+                if (Player.Object != null)
+                    line.SetOffCoord(prev ?? Player.Object.Position);
                 line.color = (prev != null ? ImGuiColors.DalamudYellow : ImGuiColors.HealerGreen).ToUint();
                 Splatoon.DisplayOnce(point);
                 if (prev != null || addPlayer)
@@ -65,10 +66,10 @@ public class SplatoonManager
         }
         else
         {
-            ret = new Element(ElementType.LineBetweenTwoFixedCoordinates)
+            ret = new(ElementType.LineBetweenTwoFixedCoordinates)
             {
                 radius = 0f,
-                thicc = 1f,
+                thicc = 1f
             };
             Cache.WaymarkLineCache.Add(ret);
         }
@@ -86,13 +87,13 @@ public class SplatoonManager
         }
         else
         {
-            ret = new Element(ElementType.CircleAtFixedCoordinates)
+            ret = new(ElementType.CircleAtFixedCoordinates)
             {
                 radius = 0f,
                 thicc = 3f,
                 color = ImGuiColors.DalamudRed.ToUint(),
                 overlayVOffset = 1f,
-                overlayText = overlay,
+                overlayText = overlay
             };
             Cache.WaymarkPointCache.Add(ret);
         }

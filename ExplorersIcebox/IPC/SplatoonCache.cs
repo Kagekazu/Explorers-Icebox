@@ -1,7 +1,7 @@
 using ECommons.SplatoonAPI;
 using System.Collections.Generic;
-
 namespace ExplorersIcebox.IPC;
+
 public class SplatoonCache
 {
     public List<Element> WaymarkLineCache = [];
@@ -9,4 +9,3 @@ public class SplatoonCache
     public List<Element> WaymarkPointCache = [];
     public int WaymarkPointPos = 0;
 }
-
