@@ -7,7 +7,12 @@ public static class AddonHelper
 {
     public static unsafe bool IsAddonActive(string AddonName) // Used to see if the addon is active/ready to be fired on
     {
-        var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(AddonName);
+        return TryGetActiveAddon(AddonName, out _);
+    }
+
+    public static unsafe bool TryGetActiveAddon(string addonName, out AtkUnitBase* addon)
+    {
+        addon = RaptureAtkUnitManager.Instance()->GetAddonByName(addonName);
         return addon != null && addon->IsVisible && addon->IsReady;
     }
 
