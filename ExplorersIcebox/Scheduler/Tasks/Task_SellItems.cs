@@ -1,9 +1,7 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.Throttlers;
 using ExplorersIcebox.Enums;
 using ExplorersIcebox.Util;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Collections.Generic;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 using Callback = ECommons.Automation.Callback;
@@ -12,92 +10,76 @@ namespace ExplorersIcebox.Scheduler.Tasks;
 
 internal static class Task_SellItems
 {
-    // Item we last fired a shipping-dialog confirmation for. Used to keep us from
-    // firing the next item's amount into the previous item's still-closing dialog.
-    private static int lastFiredItemId;
-    private static bool quantitySet;
+    private const string DisposeShopAddon = "MJIDisposeShop";
+    private const string ShippingAddon = "MJIDisposeShopShipping";
+    private const string SelectStringAddon = "SelectString";
+
+    // Item we last confirmed via the shipping callback; cleared when the shipping addon closes.
+    private static int lastShippedItemId;
 
     public static void Enqueue()
     {
+        lastShippedItemId = 0;
         var baseDict = EmbedRoutes.BaseRoutes["Base -> Shopkeep"];
         var waypoints = baseDict.Waypoints;
         var dataId = baseDict.TargetId;
 
         P.taskManager.Enqueue(() => MoveToNpc(waypoints), "Moving to NPC");
-        P.taskManager.Enqueue(() => TargetV2(dataId), $"Target task: {dataId}");
-        P.taskManager.Enqueue(() => InteractShopKeep(dataId), "Interacting w/ the material seller vendor");
-        P.taskManager.Enqueue(() => SellToNpcV2(), "Selling all the items to the npc");
+        P.taskManager.Enqueue(() => TargetShopkeeper(dataId), $"Target task: {dataId}");
+        P.taskManager.Enqueue(() => OpenExportShop(dataId), "Interacting w/ the material seller vendor");
+        P.taskManager.Enqueue(() => SellAllItems(), "Selling all the items to the npc");
         P.taskManager.EnqueueDelay(16, true);
         P.taskManager.Enqueue(() => LeaveNPC(waypoints), "Leaving the NPC");
     }
 
-    internal static bool? MoveToNpc(List<Vector3> List)
+    internal static bool? MoveToNpc(List<Vector3> waypoints)
     {
-        // Insert the logic here post return to move to NPC
-        var LastWP = List.Count - 1;
-        if (PlayerHelper.GetDistanceToPlayer(List[LastWP]) < 0.5f)
-        {
+        var lastWp = waypoints.Count - 1;
+        if (PlayerHelper.GetDistanceToPlayer(waypoints[lastWp]) < 0.5f)
             return true;
-        }
-        if (!P.navmesh.IsRunning())
-        {
-            if (EzThrottler.Throttle("Telling navmesh to move to spot"))
-            {
-                P.navmesh.MoveTo(new(List), false);
-            }
-        }
+
+        if (!P.navmesh.IsRunning() && EzThrottler.Throttle("Telling navmesh to move to spot"))
+            P.navmesh.MoveTo(new(waypoints), false);
 
         return false;
     }
 
-    internal static unsafe bool? InteractShopKeep(ulong dataId)
+    internal static unsafe bool? OpenExportShop(ulong dataId)
     {
-        if (TryGetAddonByName<AtkUnitBase>("MJIDisposeShop", out var mjiShop) && IsAddonReady(mjiShop))
-        {
+        if (IsDisposeShopReady(AgentMJIDisposeShop.Instance()))
             return true;
-        }
-        if (TryGetAddonByName<AtkUnitBase>("SelectString", out var menu) && IsAddonReady(menu))
+
+        if (AddonHelper.TryGetActiveAddon(SelectStringAddon, out var menu))
         {
             if (EzThrottler.Throttle("Selecting Export Materials"))
-            {
                 Callback.Fire(menu, true, 0);
-            }
         }
-        else
+        else if (EzThrottler.Throttle($"Interacting w/ shop seller {dataId}"))
         {
-            IGameObject? gameObject = null;
-            Utils.TryGetObjectByDataId(dataId, out gameObject);
-            if (EzThrottler.Throttle($"Interacting w/ shop seller {dataId}"))
-            {
-                Utils.InteractWithObject(gameObject);
-            }
+            Utils.TryGetObjectByDataId(dataId, out var gameObject);
+            Utils.InteractWithObject(gameObject);
         }
 
         return false;
     }
 
-        internal static bool? TargetV2(ulong dataId)
-        {
-            Utils.TryGetObjectByDataId(dataId, out var gameObject);
-
-            if (gameObject == null || gameObject.IsTarget() || !gameObject.IsTargetable)
-                return true;
-
-            if (EzThrottler.Throttle($"Targeting: {dataId}"))
-                Utils.TargetgameObject(gameObject);
-
-            return false;
-        }
-    internal static bool? SellToNpcV2()
+    internal static bool? TargetShopkeeper(ulong dataId)
     {
-        foreach (var item in IslandHelper.SellItems)
+        Utils.TryGetObjectByDataId(dataId, out var gameObject);
+
+        if (gameObject == null || gameObject.IsTarget() || !gameObject.IsTargetable)
+            return true;
+
+        if (EzThrottler.Throttle($"Targeting: {dataId}"))
+            Utils.TargetgameObject(gameObject);
+
+        return false;
+    }
+
+    internal static bool? SellAllItems()
+    {
+        foreach (var (itemId, sellAmount) in IslandHelper.SellItems)
         {
-            var itemId = item.Key;
-            var sellAmount = item.Value;
-            if (ItemData.AlwaysIgnoreSell.Contains(itemId))
-            {
-                continue;
-            }
             if (sellAmount == 0)
                 continue;
 
@@ -111,89 +93,58 @@ internal static class Task_SellItems
     private static unsafe bool TryToSellItem(int itemId, int amount)
     {
         var agent = AgentMJIDisposeShop.Instance();
-        if (agent == null || agent->Data == null || !agent->Data->DataInitialized)
+        if (!IsDisposeShopReady(agent))
             return false;
 
-        // Shipping dialog is open — confirm the sale
-        if (agent->Data->SelectCountAddonHandle != 0 &&
-            TryGetAddonByName<AtkUnitBase>("MJIDisposeShopShipping", out var mjiShip) &&
-            IsAddonReady(mjiShip))
+        var data = agent->Data;
+        if (!TryFindAgentItem(agent, (uint)itemId, out var agentItem))
         {
-            if (lastFiredItemId != 0 && lastFiredItemId != itemId)
-                return true;
-
-            // Two-phase sell: set quantity on one tick, click confirm on the next.
-            // The game needs a frame to process the NumericInput value change.
-            if (!quantitySet)
-            {
-                if (EzThrottler.Throttle($"SetQty {itemId}"))
-                {
-                    var numNode = mjiShip->GetNodeById(11);
-                    if (numNode != null)
-                    {
-                        var numInput = (AtkComponentNumericInput*)((AtkComponentNode*)numNode)->Component;
-                        numInput->SetValue(amount);
-                    }
-                    agent->Data->CurShipQuantity = amount;
-                    quantitySet = true;
-                }
-            }
-            else
-            {
-                if (EzThrottler.Throttle($"Selling {itemId}"))
-                {
-                    var confirmNode = mjiShip->GetNodeById(18);
-                    if (confirmNode != null)
-                    {
-                        var evt = confirmNode->AtkEventManager.Event;
-                        mjiShip->ReceiveEvent((AtkEventType)25, 4, evt);
-                    }
-                    IslandHelper.SellItems[itemId] = 0;
-                    lastFiredItemId = itemId;
-                    quantitySet = false;
-                }
-            }
+            Svc.Log.Warning($"Item {itemId} not found in dispose shop agent data, skipping");
+            IslandHelper.SellItems[itemId] = 0;
             return true;
         }
-        // Main shop is open — select the next item to ship
-        if (TryGetAddonMaster<MJIDisposeShop>("MJIDisposeShop", out var mjiShop) && mjiShop.IsAddonReady)
+
+        var shippingOpen = data->SelectCountAddonHandle != 0
+            && AddonHelper.IsAddonActive(ShippingAddon);
+
+        // Wait for the previous item's shipping addon to close before starting the next one.
+        if (lastShippedItemId != 0 && lastShippedItemId != itemId)
+            return true;
+
+        if (lastShippedItemId == itemId && !shippingOpen)
         {
-            lastFiredItemId = 0;
+            IslandHelper.SellItems[itemId] = 0;
+            lastShippedItemId = 0;
+            return false;
+        }
 
-            // Look up item name directly from the agent's own item data
-            // instead of relying on the separate OnPluginLoad dictionary.
-            var itemName = FindItemNameInAgent(agent, (uint)itemId);
-            if (itemName == null)
+        if (shippingOpen && AddonHelper.TryGetActiveAddon(ShippingAddon, out var mjiShip))
+        {
+            if (lastShippedItemId != itemId && EzThrottler.Throttle($"Selling {itemId}"))
             {
-                Svc.Log.Warning($"Item {itemId} not found in dispose shop agent data, skipping");
-                IslandHelper.SellItems[itemId] = 0;
-                return true;
+                data->CurShipItemIndex = agentItem.ItemIndex;
+                data->CurShipQuantity = amount;
+                Callback.Fire(mjiShip, true, 11, amount);
+                lastShippedItemId = itemId;
             }
 
-            var entry = mjiShop.ExportItems.Where(x => x.ItemName == itemName).FirstOrDefault();
-            if (EzThrottler.Throttle("Selecting the item to ship", 1500))
-            {
-                if (entry != null)
-                    entry.Select();
-            }
+            return true;
+        }
+
+        if (TryGetAddonMaster<MJIDisposeShop>(DisposeShopAddon, out var mjiShop) && mjiShop.IsAddonReady)
+        {
+            var itemName = agentItem.Name.ToString();
+            var entry = mjiShop.ExportItems.FirstOrDefault(x => x.ItemName == itemName);
+            if (EzThrottler.Throttle("Selecting the item to ship", 1500) && entry != null)
+                entry.Select();
+
             return true;
         }
 
         return false;
     }
 
-    private static unsafe string? FindItemNameInAgent(AgentMJIDisposeShop* agent, uint itemId)
-    {
-        for (long i = 0; i < agent->Data->Items.LongCount; i++)
-        {
-            ref var item = ref agent->Data->Items[i];
-            if (item.ItemId == itemId)
-                return item.Name.ToString();
-        }
-        return null;
-    }
-
-    internal static unsafe bool? LeaveNPC(List<Vector3> list)
+    internal static unsafe bool? LeaveNPC(List<Vector3> waypoints)
     {
         if (PlayerHelper.GetDistanceToPlayer(IslandHelper.BaseStart) < 0.5f)
         {
@@ -201,24 +152,48 @@ internal static class Task_SellItems
             SchedulerMain.State = IceBoxState.RunRoute;
             return true;
         }
-        if (TryGetAddonByName<AtkUnitBase>("MJIDisposeShop", out var mjiShop) && IsAddonReady(mjiShop))
+
+        if (AddonHelper.TryGetActiveAddon(DisposeShopAddon, out var mjiShop))
         {
             if (EzThrottler.Throttle("Closing shop"))
                 Callback.Fire(mjiShop, true, 1);
             return false;
         }
+
         if (!P.navmesh.IsRunning())
         {
-            List<Vector3> reverseWp = new(list);
-
+            var reverseWp = new List<Vector3>(waypoints);
             reverseWp.Reverse();
 
             if (EzThrottler.Throttle("Telling navmesh to move to spot"))
-            {
                 P.navmesh.MoveTo(new(reverseWp), false);
-            }
-            return false;
         }
+
+        return false;
+    }
+
+    private static unsafe bool IsDisposeShopReady(AgentMJIDisposeShop* agent) =>
+        agent != null
+        && agent->Data != null
+        && agent->Data->InitializationState == 3
+        && agent->Data->DataInitialized;
+
+    private static unsafe bool TryFindAgentItem(
+        AgentMJIDisposeShop* agent,
+        uint itemId,
+        out AgentMJIDisposeShop.ItemData agentItem)
+    {
+        for (var i = 0; i < agent->Data->Items.LongCount; i++)
+        {
+            ref var item = ref agent->Data->Items[i];
+            if (item.ItemId == itemId)
+            {
+                agentItem = item;
+                return true;
+            }
+        }
+
+        agentItem = default;
         return false;
     }
 }
