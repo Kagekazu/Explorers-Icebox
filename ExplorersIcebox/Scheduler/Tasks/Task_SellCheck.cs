@@ -48,6 +48,7 @@ internal static class Task_SellCheck
         }
         else if (SellToShop)
         {
+            Task_SellItems.Reset();
             Task_UpdateShop.Enqueue();
             SchedulerMain.State = IceBoxState.SellToNpc;
         }

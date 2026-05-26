@@ -1,4 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
+using ExplorersIcebox.Enums;
 using ExplorersIcebox.Scheduler;
 using ExplorersIcebox.Util;
 using System.Collections.Generic;
@@ -205,19 +206,20 @@ internal class MainWindow : Window
                 }
             }
             var DisableButtons = IslandHelper.GoalLoopAmount > IslandHelper.MaxRouteLoops || IslandHelper.MaxRouteLoops == 0 || IslandHelper.GoalLoopAmount == 0;
+            var isRunning = SchedulerMain.State != IceBoxState.Idle;
 
-            using (ImRaii.Disabled(DisableButtons))
+            using (ImRaii.Disabled(DisableButtons || isRunning))
             {
                 if (ImGui.Button("Start"))
-                {
                     SchedulerMain.EnablePlugin();
-                }
+            }
 
-                ImGui.SameLine();
+            ImGui.SameLine();
+
+            using (ImRaii.Disabled(DisableButtons || !isRunning))
+            {
                 if (ImGui.Button("Stop"))
-                {
                     SchedulerMain.DisablePlugin();
-                }
             }
 
             if (DisableButtons)
