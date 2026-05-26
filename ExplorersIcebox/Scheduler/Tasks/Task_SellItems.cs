@@ -15,11 +15,11 @@ internal static class Task_SellItems
     private const string SelectStringAddon = "SelectString";
 
     // Item we last confirmed via the shipping callback; cleared when all shipping UI is closed.
-    private static int lastShippedItemId;
+    private static int LastShippedItemId;
 
     public static void Enqueue()
     {
-        lastShippedItemId = 0;
+        LastShippedItemId = 0;
         var baseDict = EmbedRoutes.BaseRoutes["Base -> Shopkeep"];
         var waypoints = baseDict.Waypoints;
         var dataId = baseDict.TargetId;
@@ -76,7 +76,7 @@ internal static class Task_SellItems
         return false;
     }
 
-    internal static unsafe bool? SellAllItems()
+    internal static bool? SellAllItems()
     {
         foreach (var (itemId, sellAmount) in IslandHelper.SellItems)
         {
@@ -123,23 +123,23 @@ internal static class Task_SellItems
             && AddonHelper.IsAddonActive(ShippingAddon);
 
         // Wait for the previous item's shipping/confirm UI to fully close before starting the next one.
-        if (lastShippedItemId != 0 && lastShippedItemId != itemId)
+        if (LastShippedItemId != 0 && LastShippedItemId != itemId)
             return true;
 
-        if (lastShippedItemId == itemId && !IsShippingFlowActive(data))
+        if (LastShippedItemId == itemId && !IsShippingFlowActive(data))
         {
             IslandHelper.SellItems[itemId] = 0;
-            lastShippedItemId = 0;
+            LastShippedItemId = 0;
             return false;
         }
 
         if (shippingOpen && AddonHelper.TryGetActiveAddon(ShippingAddon, out var mjiShip))
         {
-            if (lastShippedItemId != itemId && EzThrottler.Throttle($"Selling {itemId}"))
+            if (LastShippedItemId != itemId && EzThrottler.Throttle($"Selling {itemId}"))
             {
                 // Let the shipping callback drive quantity; writing agent fields here can desync TryUpdateAddon.
                 Callback.Fire(mjiShip, true, 11, amount);
-                lastShippedItemId = itemId;
+                LastShippedItemId = itemId;
             }
 
             return true;
@@ -210,7 +210,7 @@ internal static class Task_SellItems
     private static unsafe bool IsAgentIdle(AgentMJIDisposeShop.AgentData* data) =>
         !data->AddonDirty
         && !IsShippingFlowActive(data)
-        && lastShippedItemId == 0;
+        && LastShippedItemId == 0;
 
     private static unsafe bool IsDisposeShopReady(AgentMJIDisposeShop* agent) =>
         agent != null
