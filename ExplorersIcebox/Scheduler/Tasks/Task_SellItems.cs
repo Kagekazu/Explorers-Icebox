@@ -14,6 +14,9 @@ internal static class Task_SellItems
     private const string ShippingAddon = "MJIDisposeShopShipping";
     private const string SelectStringAddon = "SelectString";
 
+    // 0 = overcap check, 1 = material deficit check, 2 = shipment checks finished.
+    private const byte BulkShipCheckComplete = 2;
+
     // Item we last confirmed via the shipping callback; cleared when all shipping UI is closed.
     private static int LastShippedItemId;
 
@@ -126,7 +129,7 @@ internal static class Task_SellItems
         if (LastShippedItemId != 0 && LastShippedItemId != itemId)
             return true;
 
-        if (LastShippedItemId == itemId && !IsShippingFlowActive(data))
+        if (LastShippedItemId == itemId && IsShipmentComplete(data))
         {
             IslandHelper.SellItems[itemId] = 0;
             LastShippedItemId = 0;
@@ -210,7 +213,13 @@ internal static class Task_SellItems
     private static unsafe bool IsAgentIdle(AgentMJIDisposeShop.AgentData* data) =>
         !data->AddonDirty
         && !IsShippingFlowActive(data)
+        && data->CurBulkShipCheckStage == BulkShipCheckComplete
         && LastShippedItemId == 0;
+
+    private static unsafe bool IsShipmentComplete(AgentMJIDisposeShop.AgentData* data) =>
+        !data->AddonDirty
+        && !IsShippingFlowActive(data)
+        && data->CurBulkShipCheckStage == BulkShipCheckComplete;
 
     private static unsafe bool IsDisposeShopReady(AgentMJIDisposeShop* agent) =>
         agent != null
@@ -221,6 +230,7 @@ internal static class Task_SellItems
     private static unsafe bool IsShippingFlowActive(AgentMJIDisposeShop.AgentData* data) =>
         data->SelectCountAddonHandle != 0
         || data->ConfirmAddonHandle != 0
+        || data->CurBulkShipCheckStage != BulkShipCheckComplete
         || AddonHelper.IsAddonActive(ShippingAddon);
 
     private static unsafe bool TryFindAgentItem(
