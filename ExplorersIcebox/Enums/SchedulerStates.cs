@@ -8,5 +8,6 @@ internal enum IceBoxState
     CheckSell = 2,
     SellToNpc = 3,
     RunRoute = 4,
-    EndProcess = 5
+    EndProcess = 5,
+    LeavingSellNpc = 6
 }

@@ -19,6 +19,7 @@ internal static class SchedulerMain
         IslandHelper.LoopCounter = 0;
         P.taskManager.Abort();
         P.navmesh.Stop();
+        Task_SellItems.Reset();
         State = Idle;
         return true;
     }
@@ -38,6 +39,8 @@ internal static class SchedulerMain
                 case SellToNpc:
                     Svc.Log.Information("NPC Sell State Active");
                     Task_SellItems.Enqueue();
+                    break;
+                case LeavingSellNpc:
                     break;
                 case RunRoute:
                     Svc.Log.Information("Run Route State");

@@ -14,15 +14,36 @@ internal static class Task_SellItems
     private const string ShippingAddon = "MJIDisposeShopShipping";
     private const string SelectStringAddon = "SelectString";
 
+    private const int SelectItemDelayMs = 2000;
+    private const int ShippingDialogSettleMs = 800;
+    private const int ConfirmShipmentDelayMs = 1000;
+    private const int BetweenItemsDelayMs = 800;
+    private const int MinCloseSettleMs = 1500;
+    private const int BulkCheckTimeoutMs = 4000;
+
     // 0 = overcap check, 1 = material deficit check, 2 = shipment checks finished.
     private const byte BulkShipCheckComplete = 2;
 
     // Item we last confirmed via the shipping callback; cleared when all shipping UI is closed.
     private static int LastShippedItemId;
+    private static bool sellPipelineActive;
+    private static long lastShipmentCompleteTick;
+
+    internal static void Reset()
+    {
+        sellPipelineActive = false;
+        LastShippedItemId = 0;
+        lastShipmentCompleteTick = 0;
+    }
 
     public static void Enqueue()
     {
+        if (sellPipelineActive)
+            return;
+
+        sellPipelineActive = true;
         LastShippedItemId = 0;
+        lastShipmentCompleteTick = 0;
         var baseDict = EmbedRoutes.BaseRoutes["Base -> Shopkeep"];
         var waypoints = baseDict.Waypoints;
         var dataId = baseDict.TargetId;
@@ -49,6 +70,9 @@ internal static class Task_SellItems
 
     internal static unsafe bool? OpenExportShop(ulong dataId)
     {
+        if (AllSellItemsDone())
+            return true;
+
         if (IsDisposeShopReady(AgentMJIDisposeShop.Instance()))
             return true;
 
@@ -86,7 +110,13 @@ internal static class Task_SellItems
             if (sellAmount == 0)
                 continue;
 
+            if (LastShippedItemId != 0 && LastShippedItemId != itemId)
+                continue;
+
             if (TryToSellItem(itemId, sellAmount))
+                return false;
+
+            if (LastShippedItemId != 0)
                 return false;
         }
 
@@ -95,52 +125,76 @@ internal static class Task_SellItems
 
     internal static unsafe bool? WaitForSellAgentIdle()
     {
-        if (!AllSellItemsDone())
+        if (!AllSellItemsDone() || LastShippedItemId != 0)
             return false;
+
+        EnsureShipmentCompleteTick();
 
         var agent = AgentMJIDisposeShop.Instance();
         if (agent == null || agent->Data == null)
+        {
+            if (!AddonHelper.IsAddonActive(DisposeShopAddon))
+            {
+                SchedulerMain.State = IceBoxState.LeavingSellNpc;
+                return true;
+            }
+
+            if (!HasBulkCheckTimeoutElapsed())
+                return false;
+
+            SchedulerMain.State = IceBoxState.LeavingSellNpc;
+            return true;
+        }
+
+        if (!IsSafeToCloseShop(agent->Data))
             return false;
 
-        return IsAgentIdle(agent->Data);
+        SchedulerMain.State = IceBoxState.LeavingSellNpc;
+        return true;
     }
 
     private static unsafe bool TryToSellItem(int itemId, int amount)
     {
         var agent = AgentMJIDisposeShop.Instance();
         if (!IsDisposeShopReady(agent))
-            return false;
-
-        var data = agent->Data;
-        if (data->AddonDirty)
             return true;
 
+        var data = agent->Data;
         if (!TryFindAgentItem(agent, (uint)itemId, out var agentItem))
         {
             Svc.Log.Warning($"Item {itemId} not found in dispose shop agent data, skipping");
             IslandHelper.SellItems[itemId] = 0;
-            return true;
-        }
-
-        var shippingOpen = data->SelectCountAddonHandle != 0
-            && AddonHelper.IsAddonActive(ShippingAddon);
-
-        // Wait for the previous item's shipping/confirm UI to fully close before starting the next one.
-        if (LastShippedItemId != 0 && LastShippedItemId != itemId)
-            return true;
-
-        if (LastShippedItemId == itemId && IsShipmentComplete(data))
-        {
-            IslandHelper.SellItems[itemId] = 0;
-            LastShippedItemId = 0;
             return false;
         }
 
-        if (shippingOpen && AddonHelper.TryGetActiveAddon(ShippingAddon, out var mjiShip))
+        if (LastShippedItemId == itemId)
         {
-            if (LastShippedItemId != itemId && EzThrottler.Throttle($"Selling {itemId}"))
+            if (IsItemShipmentComplete(data))
             {
-                // Let the shipping callback drive quantity; writing agent fields here can desync TryUpdateAddon.
+                if (!EzThrottler.Throttle($"Between sell items {itemId}", BetweenItemsDelayMs))
+                    return true;
+
+                IslandHelper.SellItems[itemId] = 0;
+                MarkLastShipmentComplete();
+                return false;
+            }
+
+            return true;
+        }
+
+        if (LastShippedItemId != 0)
+            return true;
+
+        if (IsShippingDialogOpen(data))
+        {
+            if (!EzThrottler.Throttle($"Shipping dialog settle {itemId}", ShippingDialogSettleMs))
+                return true;
+
+            if (AddonHelper.TryGetActiveAddon(ShippingAddon, out var mjiShip)
+                && EzThrottler.Throttle($"Selling {itemId}", ConfirmShipmentDelayMs))
+            {
+                data->CurShipItemIndex = agentItem.ItemIndex;
+                data->CurShipQuantity = amount;
                 Callback.Fire(mjiShip, true, 11, amount);
                 LastShippedItemId = itemId;
             }
@@ -148,20 +202,27 @@ internal static class Task_SellItems
             return true;
         }
 
-        if (IsShippingFlowActive(data))
+        if (IsShippingUiActive(data))
             return true;
 
         if (TryGetAddonMaster<MJIDisposeShop>(DisposeShopAddon, out var mjiShop) && mjiShop.IsAddonReady)
         {
             var itemName = agentItem.Name.ToString();
             var entry = mjiShop.ExportItems.FirstOrDefault(x => x.ItemName == itemName);
-            if (EzThrottler.Throttle("Selecting the item to ship", 1500) && entry != null)
+            if (entry == null)
+            {
+                Svc.Log.Warning($"Export entry not found for {itemName} ({itemId}), skipping");
+                IslandHelper.SellItems[itemId] = 0;
+                return false;
+            }
+
+            if (EzThrottler.Throttle($"Selecting item to ship {itemId}", SelectItemDelayMs))
                 entry.Select();
 
             return true;
         }
 
-        return false;
+        return true;
     }
 
     internal static unsafe bool? LeaveNPC(List<Vector3> waypoints)
@@ -169,18 +230,19 @@ internal static class Task_SellItems
         if (PlayerHelper.GetDistanceToPlayer(IslandHelper.BaseStart) < 0.5f)
         {
             Svc.Log.Information("Leave NPC will complete after this");
+            sellPipelineActive = false;
             SchedulerMain.State = IceBoxState.RunRoute;
             return true;
         }
 
         if (AddonHelper.TryGetActiveAddon(DisposeShopAddon, out var mjiShop))
         {
-            var agent = AgentMJIDisposeShop.Instance();
-            if (agent != null && agent->Data != null && !IsAgentIdle(agent->Data))
+            if (!CanFireCloseShop())
                 return false;
 
-            if (EzThrottler.Throttle("Closing shop"))
+            if (EzThrottler.Throttle("Closing shop", 500))
                 Callback.Fire(mjiShop, true, 1);
+
             return false;
         }
 
@@ -210,28 +272,68 @@ internal static class Task_SellItems
         return true;
     }
 
-    private static unsafe bool IsAgentIdle(AgentMJIDisposeShop.AgentData* data) =>
-        !data->AddonDirty
-        && !IsShippingFlowActive(data)
-        && data->CurBulkShipCheckStage == BulkShipCheckComplete
-        && LastShippedItemId == 0;
+    private static void MarkLastShipmentComplete()
+    {
+        LastShippedItemId = 0;
+        lastShipmentCompleteTick = Environment.TickCount64;
+    }
 
-    private static unsafe bool IsShipmentComplete(AgentMJIDisposeShop.AgentData* data) =>
-        !data->AddonDirty
-        && !IsShippingFlowActive(data)
-        && data->CurBulkShipCheckStage == BulkShipCheckComplete;
+    private static void EnsureShipmentCompleteTick()
+    {
+        if (lastShipmentCompleteTick == 0)
+            lastShipmentCompleteTick = Environment.TickCount64;
+    }
+
+    private static bool HasCloseSettleElapsed() =>
+        lastShipmentCompleteTick != 0
+        && Environment.TickCount64 - lastShipmentCompleteTick >= MinCloseSettleMs;
+
+    private static bool HasBulkCheckTimeoutElapsed() =>
+        lastShipmentCompleteTick != 0
+        && Environment.TickCount64 - lastShipmentCompleteTick >= BulkCheckTimeoutMs;
+
+    private static unsafe bool CanFireCloseShop()
+    {
+        EnsureShipmentCompleteTick();
+
+        var agent = AgentMJIDisposeShop.Instance();
+        if (agent == null || agent->Data == null)
+            return HasBulkCheckTimeoutElapsed();
+
+        return IsSafeToCloseShop(agent->Data);
+    }
+
+    private static unsafe bool IsSafeToCloseShop(AgentMJIDisposeShop.AgentData* data)
+    {
+        if (!IsItemShipmentComplete(data))
+            return false;
+
+        if (!HasCloseSettleElapsed())
+            return false;
+
+        if (data->CurBulkShipCheckStage == BulkShipCheckComplete)
+            return true;
+
+        return HasBulkCheckTimeoutElapsed();
+    }
+
+    private static unsafe bool IsItemShipmentComplete(AgentMJIDisposeShop.AgentData* data) =>
+        !data->AddonDirty && !IsShippingUiActive(data);
+
+    private static unsafe bool IsShippingDialogOpen(AgentMJIDisposeShop.AgentData* data) =>
+        data->SelectCountAddonHandle != 0
+        && AddonHelper.IsAddonActive(ShippingAddon);
+
+    private static unsafe bool IsShippingUiActive(AgentMJIDisposeShop.AgentData* data) =>
+        data->SelectCountAddonHandle != 0
+        || data->ConfirmAddonHandle != 0
+        || AddonHelper.IsAddonActive(ShippingAddon);
 
     private static unsafe bool IsDisposeShopReady(AgentMJIDisposeShop* agent) =>
         agent != null
         && agent->Data != null
         && agent->Data->InitializationState == 3
         && agent->Data->DataInitialized;
-
-    private static unsafe bool IsShippingFlowActive(AgentMJIDisposeShop.AgentData* data) =>
-        data->SelectCountAddonHandle != 0
-        || data->ConfirmAddonHandle != 0
-        || data->CurBulkShipCheckStage != BulkShipCheckComplete
-        || AddonHelper.IsAddonActive(ShippingAddon);
 
     private static unsafe bool TryFindAgentItem(
         AgentMJIDisposeShop* agent,
